@@ -60,10 +60,10 @@ Do NOT ask all questions upfront. Extract what's already in the message, then as
 ### Account — Ask If Not Mentioned
 - Short name / alias
 - Industry
-- Which Business Line (BusyCow / GeoKernel / AquaOptima / TRACI)
+- Which Business Line (BusyCow / [Product] / [Product] / [Product])
 - How did we find them / who introduced (來源)
-- Billing entity (SG - DataXquad Pte. / TW - ATA Limited)
-  → Overseas (HK/SG/MY) = SG; Taiwan or GeoKernel/TRACI = TW
+- Billing entity (SG - BusyCow Pte. / TW - ATA Limited)
+  → Overseas (HK/SG/MY) = SG; Taiwan or [Product]/[Product] = TW
 
 ### Contact — Must Have Before Saving
 - Full name
@@ -124,7 +124,7 @@ Then ask:
 
 ## Pitfalls
 - SingleSelect options must match exactly — check schema before writing
-- MultiSelect = array of strings: `["BusyCow", "GeoKernel"]`
+- MultiSelect = array of strings: `["BusyCow", "[Product]"]`
 - Phone = plain string with country code: `"+852 9123 4567"`
 - DuplexLink needs actual `record_id` from prior search/create
 - Never save Account without Country + Type — these drive billing and reporting

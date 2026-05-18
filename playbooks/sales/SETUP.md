@@ -62,7 +62,7 @@ Then create the following tables inside this app:
 ### Table 4: Partnership
 | Field | Type | Notes |
 |-------|------|-------|
-| ID | Text (primary) | Format: P001, P002... |
+| ID | Text (primary) | Format: P001, P002, P003... (sequential) |
 | Name | Text | Partner company name |
 | Stage | Single Select | Prospect / Qualifying / Agreement / Active / On Hold / Inactive |
 | Type | Multi Select | Reseller / Distributor / Referral / Technology / OEM |
@@ -96,11 +96,11 @@ Memory entry: "Sales CRM Base: [app_token] | Accounts: [id] | Contacts: [id] | O
 Fetch and install each skill:
 
 ```
-1. https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/playbooks/sales/skills/capturing-sales-intel.md
-2. https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/playbooks/sales/skills/logging-sales-activities.md
-3. https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/playbooks/sales/skills/managing-sales-pipeline.md
-4. https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/playbooks/sales/skills/managing-partnership-pipeline.md
-5. https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/playbooks/sales/skills/generating-quotations.md
+1. https://raw.githubusercontent.com/BusyCow/busycow-playbooks/main/playbooks/sales/skills/capturing-sales-intel.md
+2. https://raw.githubusercontent.com/BusyCow/busycow-playbooks/main/playbooks/sales/skills/logging-sales-activities.md
+3. https://raw.githubusercontent.com/BusyCow/busycow-playbooks/main/playbooks/sales/skills/managing-sales-pipeline.md
+4. https://raw.githubusercontent.com/BusyCow/busycow-playbooks/main/playbooks/sales/skills/managing-partnership-pipeline.md
+5. https://raw.githubusercontent.com/BusyCow/busycow-playbooks/main/playbooks/sales/skills/generating-quotations.md
 ```
 
 ---

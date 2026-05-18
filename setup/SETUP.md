@@ -13,7 +13,7 @@ This setup:
 Fetch the template and write to `~/.hermes/SOUL.md`:
 
 ```
-Fetch: https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/setup/templates/SOUL.md
+Fetch: https://raw.githubusercontent.com/BusyCow/busycow-playbooks/main/setup/templates/SOUL.md
 Write to: ~/.hermes/SOUL.md
 ```
 
@@ -35,7 +35,7 @@ Questions to ask:
 
 Then fetch the template and fill in the answers:
 ```
-Fetch: https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/setup/templates/MEMORY.md
+Fetch: https://raw.githubusercontent.com/BusyCow/busycow-playbooks/main/setup/templates/MEMORY.md
 Fill in the {{placeholders}} with user's answers
 Write to: ~/.hermes/MEMORY.md
 ```

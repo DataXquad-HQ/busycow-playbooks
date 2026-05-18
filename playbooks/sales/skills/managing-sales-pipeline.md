@@ -73,7 +73,7 @@ Do NOT run through a fixed checklist. Extract what's already in the message, the
 - Description of the deal
 - Business Line
 - Initial stage (default: Lead)
-- Owner (Hunter or Kevin)
+- Owner (the owner or Kevin)
 
 **Good probing examples:**
 > "對方的反應呢？有沒有表態預算或時間線？"

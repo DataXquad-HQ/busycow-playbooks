@@ -49,19 +49,10 @@ Prospect → Qualifying → Agreement → Active
 | On Hold | Temporarily paused |
 | Inactive | Relationship ended |
 
-## Known Partners (as of May 2026)
-| ID | Name | Notes |
-|----|------|-------|
-| P001 | HKRFID | Reseller HK — Active |
-| P002 | AICities | Reseller HK — Stanley (CEO) |
-| P003 | Onnet | Reseller MY — awaiting agreement |
-| P004 | AI Edge | Reseller HK — Richard Chan |
-| P005 | VoiceBot | Reseller HK |
-| P006 | HeadWorker Technical Consultant | Tech partner HK |
-| P007 | Cassandra | TBD |
-| P008 | Daniel (Onnet) | Legacy person record |
+## Known Partners
+Check your Partnership table in the Sales CRM Base for the current partner list.
 
-**Next ID: P009**
+**Next ID: [PID]**
 
 ---
 
@@ -116,7 +107,7 @@ For every interaction, create an Activity record.
 
 ```
 Summary format: "[Type] [Contact] @ [Partner] — [one-line outcome]"
-Example: "線上會議 Stanley @ AICities — 討論 MapKing 客戶導入，待確認時間"
+Example: "線上會議 Stanley @ [Partner] — 討論 MapKing 客戶導入，待確認時間"
 ```
 
 Activity fields to set:
@@ -138,7 +129,7 @@ Activity fields to set:
 
 **If new partnership:**
 - Check Accounts table for existing company — if not found: "這家公司還沒在 CRM 裡，要一起建嗎？" → `capturing-sales-intel`
-- Generate ID: P + zero-padded 3 digits (check current highest, next is P009)
+- Generate ID: P + zero-padded 3 digits (check current highest, next is [PID])
 - Set: Name, Account (DuplexLink), Stage, Description
 
 ---
@@ -156,7 +147,7 @@ For each entity, ask:
 ---
 
 ## Pitfalls
-- P008 is a legacy person record — new partnerships must always be companies
+- [PID] is a legacy person record — new partnerships must always be companies
 - Never create duplicate — search by name before creating
 - Activity Type must match exact SingleSelect: 電話 / 實體拜訪 / 線上會議 / WhatsApp/LINE / Demo / 訊息
 - DuplexLink = `{"link_record_ids": ["recXXX"]}` — need actual record_id

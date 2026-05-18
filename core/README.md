@@ -22,5 +22,5 @@ System-level skills that every Hermes + Lark + GBrain setup needs.
 ## Install
 
 ```
-Run this setup: https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/core/SETUP.md
+Run this setup: https://raw.githubusercontent.com/BusyCow/busycow-playbooks/main/core/SETUP.md
 ```

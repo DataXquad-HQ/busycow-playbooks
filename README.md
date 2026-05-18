@@ -5,9 +5,9 @@ Agent-ready setup and skill bundles for BusyCow clients.
 ## Stack
 
 All playbooks assume this stack:
-- **[Hermes Agent](https://github.com/DataXquad-HQ/hermes-agent)** — AI agent runtime
+- **[Hermes Agent](https://github.com/BusyCow/hermes-agent)** — AI agent runtime
 - **[Lark / Feishu](https://www.larksuite.com)** — Data backend (Bitable bases)
-- **[GBrain](https://github.com/DataXquad-HQ/gbrain)** — Long-term knowledge base (SSOT)
+- **[GBrain](https://github.com/BusyCow/gbrain)** — Long-term knowledge base (SSOT)
 
 ---
 
@@ -29,10 +29,10 @@ Tell your agent the raw GitHub URL for each `SETUP.md` and it will run the setup
 Complete these before running any SETUP.md.
 
 ### 0a. Install Hermes Agent
-Follow the [Hermes installation guide](https://github.com/DataXquad-HQ/hermes-agent#installation).
+Follow the [Hermes installation guide](https://github.com/BusyCow/hermes-agent#installation).
 
 ### 0b. Install GBrain
-Follow the [GBrain installation guide](https://github.com/DataXquad-HQ/gbrain#installation).
+Follow the [GBrain installation guide](https://github.com/BusyCow/gbrain#installation).
 
 ### 0c. Connect Hermes to Lark
 
@@ -73,11 +73,11 @@ busycow-playbooks/
 
 ```
 Step 1 — Setup:
-Run this setup: https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/setup/SETUP.md
+Run this setup: https://raw.githubusercontent.com/BusyCow/busycow-playbooks/main/setup/SETUP.md
 
 Step 2 — Core:
-Run this setup: https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/core/SETUP.md
+Run this setup: https://raw.githubusercontent.com/BusyCow/busycow-playbooks/main/core/SETUP.md
 
 Step 3 — Sales Playbook:
-Run this setup: https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/playbooks/sales/SETUP.md
+Run this setup: https://raw.githubusercontent.com/BusyCow/busycow-playbooks/main/playbooks/sales/SETUP.md
 ```

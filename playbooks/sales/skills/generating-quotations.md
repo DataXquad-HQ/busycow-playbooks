@@ -4,7 +4,7 @@ description: >
   Generate a quotation PDF for a client from Lark Base data, upload to Lark Drive,
   and write the file link back to the Quotation record. Use when user says "出報價",
   "幫我出 quotation", "generate a quote for X", "報價給", or when a pipeline
-  opportunity reaches pricing discussion. Supports multiple versions (QUO-2026-HKRFID-001, -002).
+  opportunity reaches pricing discussion. Supports multiple versions (QUO-2026-[Client]-001, -002).
 triggers:
   - "出報價"
   - "出 quotation"
@@ -31,10 +31,10 @@ Opportunity (pipeline) → [THIS SKILL] → Quotation → Contract → Invoice
 
 | Template | Doc ID | Use When |
 |----------|--------|----------|
-| BusyCow EN (with T&C + signature) | `12mLc7uyGDyZfkr0n-HBfI8_sjgih11M2nNeI0slJBqI` | BusyCow product, English client, want legally binding on sign |
-| BusyCow CH (with T&C + signature) | `1IwhlC21pqCrOr2rG8s1ZGuqR2YeJDZ14-6MfHCgLVMY` | BusyCow product, Chinese client, want legally binding on sign |
-| DX General EN (no T&C) | `1gvJbwQXQ4jbkQ8BQOO0BRm5WGTX7VvRfVuMkWGqDyPM` | All other products/services, English, standard quote |
-| DX General CH (no T&C) | `1dPHLGFGOwObhfgDbDzVJkc7AxvRmjbpl7awb29hR1lg` | All other products/services, Chinese, standard quote |
+| BusyCow EN (with T&C + signature) | `{{GOOGLE_DOC_TEMPLATE_ID}}` | BusyCow product, English client, want legally binding on sign |
+| BusyCow CH (with T&C + signature) | `{{GOOGLE_DOC_TEMPLATE_ID}}` | BusyCow product, Chinese client, want legally binding on sign |
+| DX General EN (no T&C) | `{{GOOGLE_DOC_TEMPLATE_ID}}` | All other products/services, English, standard quote |
+| DX General CH (no T&C) | `{{GOOGLE_DOC_TEMPLATE_ID}}` | All other products/services, Chinese, standard quote |
 
 **Template selection logic:**
 1. Is this BusyCow? → BC template. Otherwise → DX template.
@@ -75,15 +75,15 @@ Opportunity (pipeline) → [THIS SKILL] → Quotation → Contract → Invoice
 |-----------------|--------|-------------------|---------------------|
 | Overseas client (HK, SG, MY) | SG | DATAXQUAD PTE. LTD. | 108 Punggol Walk #07-20 Twin Waterfalls, Singapore 828764 |
 | Taiwan client | TW | ATA LIMITED 應科聯有限公司 | Rm. 202, I-Hub, No. 100, Wenhua Rd., Xitun Dist., Taichung City, Taiwan 407 |
-| GeoKernel / TRACI product | TW | ATA LIMITED 應科聯有限公司 | same as above |
-| BusyCow / AquaOptima product | SG | DATAXQUAD PTE. LTD. | same as above |
+| [Product] / [Product] product | TW | ATA LIMITED 應科聯有限公司 | same as above |
+| BusyCow / [Product] product | SG | DATAXQUAD PTE. LTD. | same as above |
 
 ---
 
 ## Base & Tables
 - **App Token:** stored in Memory as "Sales CRM Base"
-- **Quotation table:** `tblt9VC5BErtVdZc`
-- **Quotation Items table:** `tbl1jGiaq62TzdKA`
+- **Quotation table:** `{{TABLE_ID}}`
+- **Quotation Items table:** `{{TABLE_ID}}`
 - **Clients table:** `{{ACCOUNTS_TABLE_ID}}`
 - **Contacts table:** `{{CONTACTS_TABLE_ID}}`
 - **PDF Upload Folder:** `YS6IfaoFElljcjdpsN6jx1rYpBg` (Lark Drive)
@@ -128,11 +128,11 @@ Before touching any API, collect:
 ```
 MUST HAVE:
 □ Client name (company + contact person)
-□ Product line (BusyCow / GeoKernel / etc.) → determines template + entity
+□ Product line (BusyCow / [Product] / etc.) → determines template + entity
 □ Language (EN or CH) → determines template
 □ Line items: description, qty, unit price for each
 □ Currency (HKD or USD)
-□ Owner (Hunter or Kevin)
+□ Owner (the owner or Kevin)
 
 SHOULD HAVE:
 □ Client title (needed for BC templates — signature block)
@@ -152,7 +152,7 @@ Compute and confirm subtotal before proceeding: "小計 HKD 85,000，有稅嗎�
 ```python
 # Search Clients table for company info
 # Search Contacts table for contact person + title + address
-# Use mcp_lark_bitable_v1_appTableRecord_search with filter on Client Name
+# Use {{DRIVE_FOLDER_ID}} with filter on Client Name
 ```
 
 Fill in any gaps from the conversation if Base records are incomplete.
@@ -179,9 +179,9 @@ fields = {
     "Total": subtotal,
     "Status": "Draft",
     "Related Deal": opportunity_id,  # if exists
-    "Owner": "Hunter",
+    "Owner": "the owner",
 }
-# → mcp_lark_bitable_v1_appTableRecord_create
+# → {{DRIVE_FOLDER_ID}}
 # → save returned record_id as QUO_RECORD_ID
 ```
 
@@ -198,7 +198,7 @@ PYTHON_BIN = f"{HERMES_HOME}/hermes-agent/venv/bin/python"
 GBRIDGE = f"{PYTHON_BIN} {SKILL_DIR}/scripts/gws_bridge.py"
 
 # 1. Select template
-TEMPLATE_ID = "12mLc7uyGDyZfkr0n-HBfI8_sjgih11M2nNeI0slJBqI"  # one of the 4 above
+TEMPLATE_ID = "{{GOOGLE_DOC_TEMPLATE_ID}}"  # one of the 4 above
 
 # 2. Copy template → new doc
 r = terminal(f"{GBRIDGE} drive files copy --params "
@@ -257,7 +257,7 @@ Template has ONE `{{ITEM_DESC}}` row. For multiple items:
 ## Step 4: Upload PDF to Lark Drive
 
 ```python
-# Upload to folder YS6IfaoFElljcjdpsN6jx1rYpBg
+# Upload to folder {{DRIVE_FOLDER_ID}}
 filepath = f'/tmp/{quo_id}.pdf'
 filename = f'{quo_id}_{client_short}_{yyyymm}.pdf'
 
@@ -293,7 +293,7 @@ file_url = f'https://cjpg0xp67g6h.jp.larksuite.com/file/{file_token}'
 # PUT (not PATCH — PATCH returns 404 on Lark Bitable)
 mcp_lark_bitable_v1_appTableRecord_update(
     path={"app_token": "{{SALES_CRM_APP_TOKEN}}",
-          "table_id": "tblt9VC5BErtVdZc",
+          "table_id": "{{TABLE_ID}}",
           "record_id": QUO_RECORD_ID},
     data={"fields": {
         "Doc Link": {"link": file_url, "text": f"{quo_id} PDF"},
@@ -308,7 +308,7 @@ mcp_lark_bitable_v1_appTableRecord_update(
 
 ```python
 # Update Opportunity record: Stage → "Proposal"
-# mcp_lark_bitable_v1_appTableRecord_update on {{OPPORTUNITIES_TABLE_ID}}
+# {{DRIVE_FOLDER_ID}} on {{OPPORTUNITIES_TABLE_ID}}
 ```
 
 ---
@@ -317,7 +317,7 @@ mcp_lark_bitable_v1_appTableRecord_update(
 
 ```
 ✅ 報價單已產出：
-- QUO ID: QUO-2026-HKRFID-002
+- QUO ID: QUO-2026-[Client]-002
 - 範本: BusyCow CH（含條款）
 - Client: Hong Kong RFID Limited / Richard Chan
 - 金額: HKD 85,000
@@ -325,7 +325,7 @@ mcp_lark_bitable_v1_appTableRecord_update(
 - PDF: [link]
 - 已上傳至 Lark Drive + Base 已更新
 
-下一步：確認內容後說「Mark QUO-2026-HKRFID-002 as Sent」。
+下一步：確認內容後說「Mark QUO-2026-[Client]-002 as Sent」。
 ```
 
 ---

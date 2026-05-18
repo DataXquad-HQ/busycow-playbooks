@@ -30,5 +30,5 @@ A **Sales CRM Base** with 5 tables:
 ## Install
 
 ```
-Run this setup: https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/playbooks/sales/SETUP.md
+Run this setup: https://raw.githubusercontent.com/BusyCow/busycow-playbooks/main/playbooks/sales/SETUP.md
 ```
