@@ -8,6 +8,7 @@ All playbooks assume this stack:
 - **[Hermes Agent](https://github.com/BusyCow/hermes-agent)** — AI agent runtime
 - **[Lark / Feishu](https://www.larksuite.com)** — Data backend (Bitable bases)
 - **[GBrain](https://github.com/BusyCow/gbrain)** — Long-term knowledge base (SSOT)
+- **[Tavily](https://www.tavily.com)** — AI-optimised web search (replaces default search)
 
 ---
 
@@ -45,13 +46,24 @@ Follow the [GBrain installation guide](https://github.com/BusyCow/gbrain#install
 4. Add to `~/.hermes/.env`:
    ```
    LARK_APP_ID=your_app_id
-   LARK_APP_SECRET=your_app_secret
+   LARK_APP_SECRET=***
    ```
 5. Publish the app in your Lark workspace (Admin approval may be required)
 6. Verify: ask your agent "list my Lark chats" — it should return results
 
 ### 0d. Verify GBrain is running
 Ask your agent: "What's the GBrain brain identity?" — it should return version and page count.
+
+### 0e. Set up Tavily (AI-optimised web search)
+
+Tavily replaces the default web search with a research-grade API tuned for AI agents — better results, better source quality.
+
+1. Sign up at [tavily.com](https://www.tavily.com) and get your **API Key**
+2. Add to `~/.hermes/.env`:
+   ```
+   TAVILY_API_KEY=tvly-your_key_here
+   ```
+3. Hermes will automatically use Tavily for all web search operations.
 
 ---
 
@@ -63,6 +75,7 @@ busycow-playbooks/
 ├── core/               ← Core Playbook (must install before business playbooks)
 └── playbooks/
     ├── sales/          ← Sales CRM playbook
+    ├── internal-ops/   ← Internal Ops playbook (task tracking, briefings, audits)
     ├── finance/        ← (coming soon)
     └── content/        ← (coming soon)
 ```
@@ -73,11 +86,14 @@ busycow-playbooks/
 
 ```
 Step 1 — Setup:
-Run this setup: https://raw.githubusercontent.com/BusyCow/busycow-playbooks/main/setup/SETUP.md
+Run this setup: https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/setup/SETUP.md
 
 Step 2 — Core:
-Run this setup: https://raw.githubusercontent.com/BusyCow/busycow-playbooks/main/core/SETUP.md
+Run this setup: https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/core/SETUP.md
 
-Step 3 — Sales Playbook:
-Run this setup: https://raw.githubusercontent.com/BusyCow/busycow-playbooks/main/playbooks/sales/SETUP.md
+Step 3a — Sales Playbook:
+Run this setup: https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/playbooks/sales/SETUP.md
+
+Step 3b — Internal Ops Playbook:
+Run this setup: https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/playbooks/internal-ops/SETUP.md
 ```

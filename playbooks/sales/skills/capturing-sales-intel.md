@@ -28,7 +28,7 @@ author: BusyCow
 - New Partnership → hand off to `managing-partnership-pipeline`
 
 ## Base
-- **App Token:** stored in Memory as "Sales CRM Base"
+- **App Token:** `{{SALES_CRM_APP_TOKEN}}`
 - **Accounts:** `{{ACCOUNTS_TABLE_ID}}`
 - **Contacts:** `{{CONTACTS_TABLE_ID}}`
 
@@ -60,10 +60,9 @@ Do NOT ask all questions upfront. Extract what's already in the message, then as
 ### Account — Ask If Not Mentioned
 - Short name / alias
 - Industry
-- Which Business Line (BusyCow / [Product] / [Product] / [Product])
+- Which Business Line ([Product Line A] / [Product Line B] / [Product Line C])
 - How did we find them / who introduced (來源)
-- Billing entity (SG - BusyCow Pte. / TW - ATA Limited)
-  → Overseas (HK/SG/MY) = SG; Taiwan or [Product]/[Product] = TW
+- Billing entity (e.g. SG entity / TW entity — configure per your org)
 
 ### Contact — Must Have Before Saving
 - Full name
@@ -93,7 +92,7 @@ If found → update existing record, do NOT create duplicate.
 
 ---
 
-## Phase 4 — Save to Lark
+## Phase 4 — Save to CRM
 
 ### Save order (if creating both)
 1. Create Account → capture `record_id`
@@ -124,7 +123,7 @@ Then ask:
 
 ## Pitfalls
 - SingleSelect options must match exactly — check schema before writing
-- MultiSelect = array of strings: `["BusyCow", "[Product]"]`
+- MultiSelect = array of strings: `["[Product Line A]", "[Product Line B]"]`
 - Phone = plain string with country code: `"+852 9123 4567"`
 - DuplexLink needs actual `record_id` from prior search/create
 - Never save Account without Country + Type — these drive billing and reporting

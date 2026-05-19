@@ -24,7 +24,7 @@ Inside this app, create a table called **Skills** with these fields:
 | Name | Text (primary) |
 | Description | Text |
 | Source | Single Select: `our own` / `hermes` / `3rd-party` |
-| Category | Single Select: `Sales` / `Finance` / `System` / `Internal` / `Utility` / `Marketing` |
+| Category | Single Select: `Sales` / `Internal Ops` / `Finance` / `System` / `Utility` / `Marketing` |
 | Status | Single Select: `Active` / `Deprecated` |
 
 Then create a second table called **Cron Jobs** with these fields:
@@ -50,11 +50,11 @@ Memory entry: "Hermes Registry Base: [app_token] | Skills: [table_id] | Cron Job
 Fetch and install each skill by loading the raw URL:
 
 ```
-1. https://raw.githubusercontent.com/BusyCow/busycow-playbooks/main/core/skills/managing-skills.md
-2. https://raw.githubusercontent.com/BusyCow/busycow-playbooks/main/core/skills/managing-cron-jobs.md
-3. https://raw.githubusercontent.com/BusyCow/busycow-playbooks/main/core/skills/maintaining-gbrain.md
-4. https://raw.githubusercontent.com/BusyCow/busycow-playbooks/main/core/skills/maintaining-memory.md
-5. https://raw.githubusercontent.com/BusyCow/busycow-playbooks/main/core/skills/capturing-to-gbrain.md
+1. https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/core/skills/managing-skills.md
+2. https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/core/skills/managing-cron-jobs.md
+3. https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/core/skills/maintaining-gbrain.md
+4. https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/core/skills/maintaining-memory.md
+5. https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/core/skills/capturing-to-gbrain.md
 ```
 
 For each URL: fetch the content and save as a skill using `skill_manage(action='create')`.
@@ -85,4 +85,5 @@ After installing, add each skill to the Skills Registry Base:
 ## Next Step
 
 Choose a business playbook:
-- Sales: `https://raw.githubusercontent.com/BusyCow/busycow-playbooks/main/playbooks/sales/SETUP.md`
+- Sales: `https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/playbooks/sales/SETUP.md`
+- Internal Ops: `https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/playbooks/internal-ops/SETUP.md`

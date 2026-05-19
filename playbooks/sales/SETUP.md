@@ -48,21 +48,22 @@ Then create the following tables inside this app:
 ### Table 3: Opportunities
 | Field | Type | Notes |
 |-------|------|-------|
-| Order ID | Text (primary) | Format: OPP-YYYY-SHORTNAME-001 |
-| Client | Text | Company name |
+| Order ID | Text (primary) | Format: OP-YYYY-NNN |
+| Client | DuplexLink → Accounts | |
 | Stage | Single Select | Lead / Qualified / Proposal / Negotiation / Closed Won / Closed Lost |
 | Type | Single Select | New Business / Upsell / Renewal / Partnership |
-| Product Line | Single Select | |
+| Business Line | Single Select | |
 | Description | Text | |
-| Total Contract Value | Number | |
+| Expected Value | Number | |
+| Expected Close Date | DateTime | |
 | Next Action | Text | |
-| Owner | Text | |
+| Owner | User | |
 | Notes | Text | |
 
 ### Table 4: Partnership
 | Field | Type | Notes |
 |-------|------|-------|
-| ID | Text (primary) | Format: P001, P002, P003... (sequential) |
+| ID | Text (primary) | Format: PA-YYYY-NNN |
 | Name | Text | Partner company name |
 | Stage | Single Select | Prospect / Qualifying / Agreement / Active / On Hold / Inactive |
 | Type | Multi Select | Reseller / Distributor / Referral / Technology / OEM |
@@ -75,14 +76,16 @@ Then create the following tables inside this app:
 | Field | Type | Notes |
 |-------|------|-------|
 | Summary | Text (primary) | One-line description |
-| Account | Text | Company name |
+| Account | DuplexLink → Accounts | |
 | Contact | Text | Person name |
-| Type | Single Select | Call / Meeting / Demo / Email / WhatsApp / Site Visit / Other |
+| Type | Single Select | 電話 / 實體拜訪 / 線上會議 / WhatsApp\/LINE / Demo / 訊息 / Other |
 | Client Response | Text | What they said / their reaction |
 | Stage Advanced? | Checkbox | Did the deal move forward? |
 | Next Action | Text | What needs to happen next |
 | Date | DateTime | When it happened |
-| Owner | Text | Who conducted the interaction |
+| Owner | User | Who conducted the interaction |
+| Opportunity | DuplexLink → Opportunities | |
+| Partnership | DuplexLink → Partnership | |
 
 After creating, save to Memory:
 ```
@@ -96,11 +99,11 @@ Memory entry: "Sales CRM Base: [app_token] | Accounts: [id] | Contacts: [id] | O
 Fetch and install each skill:
 
 ```
-1. https://raw.githubusercontent.com/BusyCow/busycow-playbooks/main/playbooks/sales/skills/capturing-sales-intel.md
-2. https://raw.githubusercontent.com/BusyCow/busycow-playbooks/main/playbooks/sales/skills/logging-sales-activities.md
-3. https://raw.githubusercontent.com/BusyCow/busycow-playbooks/main/playbooks/sales/skills/managing-sales-pipeline.md
-4. https://raw.githubusercontent.com/BusyCow/busycow-playbooks/main/playbooks/sales/skills/managing-partnership-pipeline.md
-5. https://raw.githubusercontent.com/BusyCow/busycow-playbooks/main/playbooks/sales/skills/generating-quotations.md
+1. https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/playbooks/sales/skills/capturing-sales-intel.md
+2. https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/playbooks/sales/skills/managing-sales-pipeline.md
+3. https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/playbooks/sales/skills/managing-partnership-pipeline.md
+4. https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/playbooks/sales/skills/reviewing-sales-pipeline.md
+5. https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/playbooks/sales/skills/enriching-leads.md
 ```
 
 ---
@@ -112,10 +115,10 @@ Add each skill to the Skills Registry (from Core Playbook):
 | Name | Source | Category |
 |------|--------|----------|
 | capturing-sales-intel | our own | Sales |
-| logging-sales-activities | our own | Sales |
 | managing-sales-pipeline | our own | Sales |
 | managing-partnership-pipeline | our own | Sales |
-| generating-quotations | our own | Sales |
+| reviewing-sales-pipeline | our own | Sales |
+| enriching-leads | our own | Sales |
 
 ---
 
@@ -124,6 +127,7 @@ Add each skill to the Skills Registry (from Core Playbook):
 - "Show me my accounts table" → agent should query the Accounts table
 - "Log a quick call with [name]" → should trigger `logging-sales-activities`
 - "Add a new contact" → should trigger `capturing-sales-intel`
+- "What's our pipeline looking like?" → should trigger `reviewing-sales-pipeline`
 
 ---
 
@@ -132,6 +136,7 @@ Add each skill to the Skills Registry (from Core Playbook):
 Your Sales CRM is ready. Example interactions:
 
 > "剛跟 [公司] 的 [姓名] 開了個會，他們對我們的產品很有興趣"
-> "幫我記一個新客戶：[公司名]，在香港做 RFID 的"
-> "Onnet 這個 partner 現在什麼狀況？"
+> "幫我記一個新客戶：[公司名]"
+> "這個 partner 現在什麼狀況？"
 > "幫我出一份 quotation 給 [客戶]"
+> "我們的 pipeline 現在怎樣？"

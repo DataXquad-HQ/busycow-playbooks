@@ -1,34 +1,33 @@
 # Sales Playbook
 
-CRM + sales workflow skills for Hermes + Lark + GBrain.
+The Sales Playbook gives Hermes full CRM capability — capturing contacts, logging activities, managing deal pipelines, tracking partnerships, reviewing pipeline health, and enriching account data.
 
-**Requires Core Playbook to be installed first.**
+## What's Included
 
-## What This Installs
-
-### Lark Base (created by SETUP)
-A **Sales CRM Base** with 5 tables:
-
-| Table | Purpose |
+| Skill | Trigger |
 |-------|---------|
-| Accounts | Companies and organisations |
-| Contacts | Individuals and their roles |
-| Opportunities | Active deals and pipeline |
-| Partnership | Resellers, channel partners, referral agents |
-| Activities | All interactions (calls, meetings, emails, demos) |
+| `capturing-sales-intel` | New contact or company → CRM |
+| `managing-sales-pipeline` | Deal update, stage change, meeting logged |
+| `managing-partnership-pipeline` | Partner update, new partner prospect |
+| `reviewing-sales-pipeline` | Sales status briefing, pipeline overview, AR |
+| `enriching-leads` | Auto-enrich account with web data |
 
-### Skills
+## Prerequisites
 
-| Skill | When to Use |
-|-------|-------------|
-| `capturing-sales-intel` | New contact, company, opportunity, or partner |
-| `logging-sales-activities` | Logging a call, meeting, demo, or follow-up |
-| `managing-sales-pipeline` | Updating deal stage or next action |
-| `managing-partnership-pipeline` | Partnership stage progress |
-| `generating-quotations` | Client requests a price proposal |
+- Core Playbook installed (`core/SETUP.md` complete)
+- Lark connected with `bitable:app` permissions
 
 ## Install
 
 ```
-Run this setup: https://raw.githubusercontent.com/BusyCow/busycow-playbooks/main/playbooks/sales/SETUP.md
+Run this setup: https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/playbooks/sales/SETUP.md
 ```
+
+## Example Interactions (after setup)
+
+> "剛跟 [公司] 的 [姓名] 開了個會，他們對我們的產品很有興趣"
+> "幫我記一個新客戶：[公司名]，在香港做分銷的"
+> "這個 partner 現在什麼狀況？"
+> "幫我出一份 quotation 給 [客戶]"
+> "我們的 pipeline 現在怎樣？"
+> "Enrich [company name]"
