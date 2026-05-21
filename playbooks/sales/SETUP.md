@@ -1,23 +1,22 @@
-# Sales Playbook — Setup
+# Sales & Ops Playbook — Setup
 
 Run this after `core/SETUP.md` is complete.
 
 This setup:
-1. Creates the **Sales CRM Base** in Lark with 5 tables
-2. Installs 5 sales skills
-3. Registers skills in the Skills Registry
+1. Creates the **Sales & Ops Base** in Lark — one unified base for CRM + tasks
+2. Installs sales and task management skills
+3. Creates recommended Lark chat groups
+4. Registers skills in the Skills Registry
+
+**Design principle:** Tasks are business-anchored. They live here alongside Opportunities and Partnerships, not in a separate system.
 
 ---
 
-## Step 1 — Create Sales CRM Base
+## Step 1 — Create Sales & Ops Base
 
-Call the Lark API to create a new Bitable app named "Sales CRM":
+Call the Lark API to create a new Bitable app named **"Sales & Ops"**.
 
-```
-Create Lark Bitable app: "Sales CRM"
-```
-
-Then create the following tables inside this app:
+Then create the following tables:
 
 ### Table 1: Accounts
 | Field | Type | Notes |
@@ -53,12 +52,13 @@ Then create the following tables inside this app:
 | Stage | Single Select | Lead / Qualified / Proposal / Negotiation / Closed Won / Closed Lost |
 | Type | Single Select | New Business / Upsell / Renewal / Partnership |
 | Business Line | Single Select | |
-| Description | Text | |
+| Summary | Text | One-line description |
+| Description | Text | Full notes and context |
 | Expected Value | Number | |
 | Expected Close Date | DateTime | |
 | Next Action | Text | |
 | Owner | User | |
-| Notes | Text | |
+| Tasks | DuplexLink → Tasks | |
 
 ### Table 4: Partnership
 | Field | Type | Notes |
@@ -68,9 +68,11 @@ Then create the following tables inside this app:
 | Stage | Single Select | Prospect / Qualifying / Agreement / Active / On Hold / Inactive |
 | Type | Multi Select | Reseller / Distributor / Referral / Technology / OEM |
 | Country | Single Select | |
+| Summary | Text | One-line status |
 | Description | Text | Running narrative log |
 | Account | DuplexLink → Accounts | |
 | Activities | DuplexLink → Activities | |
+| Tasks | DuplexLink → Tasks | |
 
 ### Table 5: Activities
 | Field | Type | Notes |
@@ -87,14 +89,75 @@ Then create the following tables inside this app:
 | Opportunity | DuplexLink → Opportunities | |
 | Partnership | DuplexLink → Partnership | |
 
+### Table 6: Goals
+| Field | Type | Notes |
+|-------|------|-------|
+| Goal Name | Text (primary) | 12–18 month business outcome |
+| Business Line | Single Select | Your business lines |
+| Target Date | DateTime | Expected achievement date |
+| Status | Single Select | Active / Achieved / On Hold |
+| Notes | Text | |
+
+### Table 7: Initiatives
+| Field | Type | Notes |
+|-------|------|-------|
+| Initiative Name | Text (primary) | Focused workstream |
+| Goal | DuplexLink → Goals | |
+| Business Line | Single Select | |
+| Status | Single Select | Active / Done / On Hold / Cancelled |
+| Target Finished | DateTime | |
+| Tasks | DuplexLink → Tasks | |
+
+### Table 8: Tasks
+| Field | Type | Notes |
+|-------|------|-------|
+| Task Name | Text (primary) | Format: [TAG] action description |
+| Done | Checkbox | true = completed |
+| Deadline | DateTime | |
+| Business Line | Single Select | |
+| Responsible Person | User | |
+| Priority | Single Select | 🔴 High / 🟡 Medium / 🟢 Low |
+| Description | Text | |
+| Initiative | DuplexLink → Initiatives | |
+| Opportunity | DuplexLink → Opportunities | |
+| Partnership | DuplexLink → Partnership | |
+
 After creating, save to Memory:
 ```
-Memory entry: "Sales CRM Base: [app_token] | Accounts: [id] | Contacts: [id] | Opportunities: [id] | Partnership: [id] | Activities: [id]"
+Memory entry: "Sales & Ops Base: [app_token]
+  Accounts: [id] | Contacts: [id] | Opportunities: [id]
+  Partnership: [id] | Activities: [id]
+  Goals: [id] | Initiatives: [id] | Tasks: [id]"
 ```
 
 ---
 
-## Step 2 — Install Sales Skills
+## Step 2 — Create Initial Goals
+
+Add at least one Goal per active business line. Each Goal should represent a 12–18 month business outcome.
+
+Example: "Achieve [Business Line] $X ARR by [Date]"
+
+---
+
+## Step 3 — Create Lark Chat Groups
+
+Create two chat groups:
+
+| Group Name | Purpose |
+|---|---|
+| `[Company] Sales` | Sales updates, deal discussions, pipeline reviews |
+| `[Company] Tasks` | Daily task briefings, weekly audits, action tracking |
+
+Add Hermes bot to both groups. Save the chat IDs to Memory:
+```
+Memory entry: "Sales group chat_id: [chat_id]"
+Memory entry: "Tasks group chat_id: [chat_id]"
+```
+
+---
+
+## Step 4 — Install Sales & Task Skills
 
 Fetch and install each skill:
 
@@ -104,13 +167,15 @@ Fetch and install each skill:
 3. https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/playbooks/sales/skills/managing-partnership-pipeline.md
 4. https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/playbooks/sales/skills/reviewing-sales-pipeline.md
 5. https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/playbooks/sales/skills/enriching-leads.md
+6. https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/playbooks/sales/skills/logging-sales-activities.md
+7. https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/playbooks/sales/skills/generating-quotations.md
+8. https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/playbooks/internal-ops/skills/managing-tasks.md
+9. https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/playbooks/internal-ops/skills/reviewing-tasks.md
 ```
 
 ---
 
-## Step 3 — Register in Skills Registry
-
-Add each skill to the Skills Registry (from Core Playbook):
+## Step 5 — Register in Skills Registry
 
 | Name | Source | Category |
 |------|--------|----------|
@@ -119,24 +184,29 @@ Add each skill to the Skills Registry (from Core Playbook):
 | managing-partnership-pipeline | our own | Sales |
 | reviewing-sales-pipeline | our own | Sales |
 | enriching-leads | our own | Sales |
+| logging-sales-activities | our own | Sales |
+| generating-quotations | our own | Sales |
+| managing-tasks | our own | Internal Ops |
+| reviewing-tasks | our own | Internal Ops |
 
 ---
 
-## Step 4 — Verify
+## Step 6 — Verify
 
-- "Show me my accounts table" → agent should query the Accounts table
-- "Log a quick call with [name]" → should trigger `logging-sales-activities`
-- "Add a new contact" → should trigger `capturing-sales-intel`
-- "What's our pipeline looking like?" → should trigger `reviewing-sales-pipeline`
+- "Show me my accounts" → should query Accounts table
+- "Log a call with [name]" → should trigger `logging-sales-activities`
+- "Add task: [description]" → should create task in Tasks table
+- "What tasks do I have?" → should return open tasks grouped by Goal
+- "What's our pipeline?" → should trigger `reviewing-sales-pipeline`
 
 ---
 
 ## Done
 
-Your Sales CRM is ready. Example interactions:
+Your Sales & Ops system is ready. Example interactions:
 
-> "剛跟 [公司] 的 [姓名] 開了個會，他們對我們的產品很有興趣"
+> "剛跟 [公司] 的 [姓名] 開了個會，他們對我們很有興趣"
 > "幫我記一個新客戶：[公司名]"
 > "這個 partner 現在什麼狀況？"
-> "幫我出一份 quotation 給 [客戶]"
+> "新增一個 task：下週前要發提案給 [客戶]"
 > "我們的 pipeline 現在怎樣？"

@@ -2,37 +2,140 @@
 
 **Production-grade AI agent skills and setup guides for Hermes Agent.**
 
-This repo packages everything needed to replicate a fully operational AI agent system — from initial stack setup to specialized business playbooks. Each playbook is self-contained and installable via a single URL.
+This repo packages everything needed to replicate a fully operational AI agent system — from initial stack setup to specialized business playbooks. Follow the installation order exactly. Each layer has its own SETUP.md that the agent reads and executes autonomously.
 
 ---
 
-## Stack
+## Architecture
 
-**Hermes Agent** (AI framework) + **Lark/Feishu** (data + comms) + **GBrain** (knowledge graph)
+**Three core pillars:**
 
----
-
-## Installation Order
-
-```
-Step 1: setup/SETUP.md         → SOUL.md + Memory skeleton
-Step 2: core/SETUP.md          → Skills registry base + 12 core skills
-Step 3: playbooks/X/SETUP.md   → Business-specific skills (pick what you need)
-```
-
----
-
-## Setup
-
-| Path | What it does |
+| Pillar | Purpose |
 |---|---|
-| [`setup/SETUP.md`](setup/SETUP.md) | Initial agent identity, memory skeleton, and SOUL.md |
+| **Lark / Feishu** | Workspace comms, databases (Bitable), documents |
+| **Google Workspace** | External email, calendar, Drive, Sheets, Docs |
+| **GBrain** | Long-term knowledge graph — entities, decisions, intel |
+
+**Task management is business-anchored.** There is no standalone Task Tracker. Tasks live inside the business Base of the playbook that owns them (Sales & Ops, Finance, etc.), linked directly to Opportunities, Partnerships, or Initiatives. This keeps tasks tied to context, not floating in a separate system.
 
 ---
 
-## Core Playbook
+## Installation Flow
 
-Foundation skills every workspace needs. **Install this before any business playbook.**
+### Phase 0 — Human Prerequisites (manual, before running any agent)
+
+These steps require a human. Complete all of them before running any automated setup.
+
+**Step 1 — Provision a VM and install Hermes Agent**
+```bash
+# On your VM (Ubuntu 22.04+ recommended):
+curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
+```
+
+**Step 2 — Create a Lark organization and set up the Hermes Lark App**
+1. Go to [open.feishu.cn](https://open.feishu.cn) (or Lark equivalent)
+2. Create a new application (bot)
+3. Set the App ID and App Secret in your Hermes config:
+   ```bash
+   hermes config set lark.app_id YOUR_APP_ID
+   hermes config set lark.app_secret YOUR_APP_SECRET
+   ```
+
+**Step 3 — Enable Lark API permissions in the Dev Console**
+
+In your Lark app's permission settings, enable:
+- Messaging: `im:message`, `im:message:send_as_bot`
+- Base (Bitable): `bitable:app`, `bitable:table`, `bitable:record`
+- Docs: `docx:document`, `drive:drive`
+- Contact: `contact:user.id:readonly`
+
+Then publish/release the app to your organization.
+
+**Step 4 — Run the Hermes Lark approval flow**
+
+This links Hermes to your Lark user ID so it can send you messages:
+```bash
+hermes setup lark
+```
+Follow the prompts. At the end, Hermes will confirm your Lark user ID is in the approved list.
+
+**Step 5 — (Optional) Google Workspace**
+
+If you use Gmail / Google Calendar / Drive:
+```bash
+hermes setup google-workspace
+```
+Or set up manually via the `google-workspace` skill (installed in core).
+
+---
+
+### Phase 1 — Identity Setup (agent-automated)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/setup/SETUP.md \
+  | hermes "Follow these setup instructions exactly"
+```
+
+What this does:
+- Writes `~/.hermes/SOUL.md` — knowledge routing rules (GBrain / Memory / Skills decision tree)
+- Scaffolds `~/.hermes/MEMORY.md` — company name, Lark tokens, preferences
+- Writes `~/.hermes/USER.md` — user profile
+
+---
+
+### Phase 2 — Core Setup (agent-automated)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/core/SETUP.md \
+  | hermes "Follow these setup instructions exactly"
+```
+
+What this does:
+- Initializes **GBrain** knowledge graph and refines Hermes system prompt to use it
+- Configures **Lark MCP** server for native tool access
+- Sets up **Google Workspace** CLI (`gws`) if opted in
+- Creates **Hermes Registry Base** in Lark (Skills table + Cron Jobs table)
+- Installs all core skills
+
+→ [`core/SETUP.md`](core/SETUP.md)
+
+---
+
+### Phase 3 — Business Playbooks (pick what you need)
+
+Run each playbook SETUP.md to install the Lark Base schema, skills, chat groups, and cron jobs for that business context.
+
+```bash
+# Sales & Ops (CRM + pipeline + tasks)
+curl -fsSL https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/playbooks/sales/SETUP.md \
+  | hermes "Follow these setup instructions exactly"
+
+# Internal Ops (tasks, briefings, audits — requires Sales or a standalone Ops Base)
+curl -fsSL https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/playbooks/internal-ops/SETUP.md \
+  | hermes "Follow these setup instructions exactly"
+
+# Knowledge Ops (GBrain enrichment, Lark → GBrain extraction, memory sync)
+curl -fsSL https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/playbooks/knowledge-ops/SETUP.md \
+  | hermes "Follow these setup instructions exactly"
+
+# Finance (financial models, invoices, forecasts)
+curl -fsSL https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/playbooks/finance/SETUP.md \
+  | hermes "Follow these setup instructions exactly"
+
+# Lark Ops (Bitable schema, Lark Docs, calendar sync)
+curl -fsSL https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/playbooks/lark-ops/SETUP.md \
+  | hermes "Follow these setup instructions exactly"
+
+# Content (blog posts, pitch decks, diagrams, PDFs, multimedia)
+curl -fsSL https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/playbooks/content/SETUP.md \
+  | hermes "Follow these setup instructions exactly"
+```
+
+---
+
+## Core Skills
+
+Foundation skills every workspace needs. Installed in Phase 2.
 
 | Skill | What it does |
 |---|---|
@@ -43,20 +146,19 @@ Foundation skills every workspace needs. **Install this before any business play
 | `maintaining-memory` | Framework for deciding what goes in Memory vs Skills vs GBrain |
 | `capturing-to-gbrain` | Save valuable conversation knowledge to GBrain |
 | `google-workspace` | Gmail, Calendar, Drive, Sheets, Docs via `gws` CLI |
-| `himalaya` | CLI email client — list, read, send, search via IMAP/SMTP |
-| `numpy-financial` | Financial calculations — NPV, IRR, DCF, PMT, loan amortisation |
-| `native-mcp` | Connect MCP servers to Hermes — auto-discover and register tools |
-| `mcporter` | CLI tool to call MCP servers ad-hoc |
 | `lark-mcp-setup` | Set up lark-mcp as a native MCP server in Hermes config |
-
-→ [`core/SETUP.md`](core/SETUP.md)
+| `native-mcp` | Connect MCP servers to Hermes — auto-discover and register tools |
+| `managing-team-knowledge` | Log team decisions, track RACI ownership, detect Bus Factor risks |
 
 ---
 
 ## Business Playbooks
 
-### Sales
-CRM management, pipeline tracking, lead enrichment, quotation generation, partner management.
+### Sales & Ops
+CRM management, pipeline tracking, lead enrichment, quotation generation, partner management — and all business-linked tasks.
+
+**Lark Base created:** `Sales & Ops` (Accounts, Contacts, Opportunities, Partnership, Activities, Goals, Initiatives, Tasks)
+**Lark groups created:** `[Company] Sales`, `[Company] Ops`
 
 | Skill | What it does |
 |---|---|
@@ -67,18 +169,21 @@ CRM management, pipeline tracking, lead enrichment, quotation generation, partne
 | `reviewing-sales-pipeline` | Pull pipeline status briefing — deals, invoices, forecast |
 | `logging-sales-activities` | Log meeting notes and call summaries to CRM |
 | `generating-quotations` | Generate quotation PDF from CRM data, upload to Drive |
+| `managing-tasks` | Create and update tasks linked to Opportunities / Partnerships |
+| `reviewing-tasks` | Query tasks with Goal-first prioritisation |
 
 → [`playbooks/sales/SETUP.md`](playbooks/sales/SETUP.md)
 
 ---
 
 ### Internal Ops
-Task tracking, daily briefings, weekly audits, and prioritisation.
+Task briefings, weekly audits, and prioritisation. **Requires Sales & Ops Base or a standalone Ops Base.**
+
+**Lark groups created:** `[Company] Tasks`
+**Cron jobs created:** Daily briefing (Mon–Fri 09:00), Weekly audit (Sun 09:00)
 
 | Skill | What it does |
 |---|---|
-| `managing-tasks` | Create and update tasks in the Task Tracker — auto-triage multi-task dumps |
-| `reviewing-tasks` | Query tasks with Goal-first prioritisation — standup, weekly view |
 | `planning-next-actions` | Score active tasks and recommend top 3–5 actions with reasoning |
 | `generating-task-briefing` | Generate daily task briefing message (Mon–Fri, format varies by day) |
 | `auditing-tasks` | Weekly audit — orphan tasks, stale initiatives, grouping recommendations |
@@ -96,7 +201,6 @@ GBrain enrichment, knowledge extraction, team intelligence, and memory sync.
 | `extracting-lark-to-gbrain` | Pull Lark group chat messages and extract knowledge into GBrain |
 | `extracting-notion-pages` | Extract content from private Notion pages via API |
 | `syncing-brain-memory` | Sync GBrain vault and Hermes memory files to GitHub |
-| `managing-team-knowledge` | Log team decisions, track RACI ownership, detect Bus Factor risks |
 
 → [`playbooks/knowledge-ops/SETUP.md`](playbooks/knowledge-ops/SETUP.md)
 
@@ -144,44 +248,6 @@ Financial modeling, investor forecasts, Google Sheets models, and invoice genera
 | `generating-invoices` | Generate invoices from CRM data, fill Doc template, export PDF |
 
 → [`playbooks/finance/SETUP.md`](playbooks/finance/SETUP.md)
-
----
-
-### AI Automation
-Multi-agent systems, autonomous pipelines, AI vision, speech recognition, and event-driven automation.
-
-| Skill | What it does |
-|---|---|
-| `hermes-cron-scheduling` | Scheduling conventions and time-window philosophy for Hermes cron jobs |
-| `hermes-profile-management` | Manage profiles — inspect, move cron jobs, reset auth/state |
-| `webhook-subscriptions` | Event-driven webhooks so external services trigger your agent |
-| `running-strategic-council` | Multi-agent council to pressure-test business goals before acting |
-| `crewai-claude-code-writer` | Wire Claude Code CLI as builder agent inside CrewAI — solves max_iter exhaustion |
-| `crewai-openhands-deploy` | Deploy CrewAI + OpenHands self-hosted AI dev stack via Docker |
-| `ai-pipeline-feasibility-study` | Validate AI vision pipelines end-to-end without physical hardware |
-| `facility-inspection-ai-playbook` | AI inspection playbook for patrol robots (YOLO-World + VLM + ticketing) |
-| `whisper` | Speech recognition — transcription, translation, 99 languages |
-| `graphify` | Build visual knowledge graphs from any documents, code, or notes |
-
-→ [`playbooks/ai-automation/SETUP.md`](playbooks/ai-automation/SETUP.md)
-
----
-
-## Quick Start (full install)
-
-```bash
-# 1. Initial setup
-curl -fsSL https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/setup/SETUP.md \
-  | hermes "Follow these setup instructions exactly"
-
-# 2. Core skills
-curl -fsSL https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/core/SETUP.md \
-  | hermes "Follow these setup instructions exactly"
-
-# 3. Pick your playbooks
-curl -fsSL https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/playbooks/sales/SETUP.md \
-  | hermes "Follow these setup instructions exactly"
-```
 
 ---
 
