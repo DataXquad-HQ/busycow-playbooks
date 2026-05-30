@@ -37,6 +37,7 @@ google_api.py  →  gws_bridge.py  →  gws CLI
 ## References
 
 - `references/gmail-search-syntax.md` — Gmail search operators (is:unread, from:, newer_than:, etc.)
+- `references/presentation-reframing.md` — Editorial pattern for converting a company pitch deck into an observation/sharing-tone talk (structure, language moves, audience calibration, Google Docs editing sequence).
 
 ## Scripts
 
@@ -82,6 +83,16 @@ $GSETUP --check
 ```
 
 If it prints `AUTHENTICATED`, skip to Usage — setup is already done.
+
+> **Note on actual file location (busycow-hermes VM):** The credential files are stored at `~/.hermes/` (the persistent data disk), NOT inside the skill directory. The setup script auto-detects this via `HERMES_HOME` or falls back to the data disk path. To copy credentials to another VM:
+> ```bash
+> # Source files are at:
+> ~/.hermes/google_token.json
+> ~/.hermes/google_client_secret.json
+> # Verify with:
+> python3 ~/.hermes/skills/productivity/google-workspace/scripts/setup.py --check
+> # → prints: AUTHENTICATED: Token valid at ~/.hermes/google_token.json
+> ```
 
 ### Step 1: Triage — ask the user what they need
 
@@ -188,7 +199,7 @@ sys.path.insert(0, f"{os.environ.get('HERMES_HOME', os.path.expanduser('~/.herme
 from gws_bridge import get_valid_token
 
 token = get_valid_token()
-DRIVE_ID = "0AMV9-bYAvS7GUk9PVA"  # last segment of the Shared Drive URL
+DRIVE_ID = "{{SHARED_DRIVE_ID}}"  # last segment of the Shared Drive URL
 
 def gapi(method, path, body=None, params_dict=None):
     base = f"https://www.googleapis.com/drive/v3/{path}"
@@ -239,12 +250,28 @@ for d in drives.get("drives", []):
     print(d["name"], d["id"])
 ```
 
+**Moving orphaned My Drive docs INTO a Shared Drive:**
+
+`PATCH /drive/v3/files/{id}?addParents=...` with `canMoveItemIntoTeamDrive=false` will return 403 even with editor permission. Orphaned docs (files with empty `parents: []`) that live in another user's My Drive cannot be moved into a Shared Drive by the OAuth account — only the owner can. The correct pattern is to **copy** instead:
+
+```python
+# Copy the file into the target Shared Drive folder
+result = gapi("POST", f"files/{doc_id}/copy",
+    {"name": original_name, "parents": [TARGET_FOLDER_ID]},
+    {"supportsAllDrives": "true"}
+)
+new_id = result["id"]
+# Original stays in owner's My Drive — they can delete it themselves
+```
+
+Diagnosis: check `capabilities.canMoveItemIntoTeamDrive` on the file metadata. If `false`, copy is the only path.
+
 **Critical pitfalls for Shared Drive API:**
 - ❌ `urllib.request` raises `InvalidURL: URL can't contain control characters` if you build `?q='folder_id' in parents` by string concatenation — spaces in `in parents` cause it. **Always use `urllib.parse.urlencode(params_dict)` to build the query string.**
-- ❌ Using wrong OAuth app ID → `403 Forbidden` on write ops. Shared Drive writes require the app that **owns** the Drive. Use `cli_a97bd21895f89e18` (Hermes-BusyCow) for the BusyCow Shared Drive, NOT `{{LARK_APP_ID}}` (lark-mcp app).
+- ❌ Using wrong OAuth app ID → `403 Forbidden` on write ops. Shared Drive writes require the app that **owns** the Drive. Use `cli_a97bd21895f89e18` (Hermes-BusyCow) for the BusyCow Shared Drive, NOT `cli_a96d2de81f3a1e17` (lark-mcp app).
 - ❌ `move()` without `removeParents` leaves the file in both locations — always pass both.
 - ✅ `gapi drive search` CLI wrapper does NOT work for Shared Drives — always use direct REST.
-- ✅ To get Shared Drive ID: it's the last path segment of the Drive URL, e.g. `drive.google.com/drive/folders/0AMV9-bYAvS7GUk9PVA` → ID = `0AMV9-bYAvS7GUk9PVA`
+- ✅ To get Shared Drive ID: it's the last path segment of the Drive URL, e.g. `drive.google.com/drive/folders/{{SHARED_DRIVE_ID}}` → ID = `{{SHARED_DRIVE_ID}}`
 - ✅ To list Shared Drives available to the account: `GET /drive/v3/drives`
 
 #### Shared Drive restructuring workflow (confirmed pattern — BusyCow Drive 2026-05-20)
@@ -258,7 +285,7 @@ for d in drives.get("drives", []):
 
 **BusyCow Drive naming convention (approved 2026-05-20):**
 - Root level: `[DX] Folder` prefix for company-wide folders (floats to top, signals "shared by all BLs")
-- Root level: bare name for Business Line folders (`[your product]`, `BusyCow`, `[your product]`, `Distify`)
+- Root level: bare name for Business Line folders (`[Product]`, `BusyCow`, `[Product]`, `[Product]`)
 - Inside each BL: `00_Core`, `01_Sales & Marketing`, `02_Commercial`, `03_Clients`, `90_Inbox`, `Archived`
 - `[DX] Projects/` at root — all time-bound projects regardless of BL, named `[BL] Project Name YYYY`
 - `[DX] Operations/` — Invoices, Quotations, Templates, Contracts (cross-BL ops)
@@ -314,7 +341,52 @@ PITFALL: **Google Sheets stored as .xlsx (Office format) cannot be read via the 
 
 PITFALL: `drive files export` only works for **native Google Docs** (Docs/Sheets/Slides created inside Google Drive). If the file is a `.docx` upload, it returns `fileNotExportable`. Use `drive files get --params '{"fileId": "...", "alt": "media"}'` for uploaded binary files.
 
-PITFALL: `drive files get` (metadata or media) returns 404 if the file was shared with you via a public link but is not in your Drive. The Drive API only sees files the authenticated user owns or has been explicitly added to their Drive.
+**PITFALL: `drive files get` (metadata or media) returns 404 if the file was shared with you via a public link but is not in your Drive. The Drive API only sees files the authenticated user owns or has been explicitly added to their Drive.
+
+PITFALL: **"Anyone with the link" sharing does NOT grant API access.** A Google Doc shared as "Anyone with the link can view/edit" still returns 404 via the Drive API and a login-redirect HTML page via curl export if the OAuth account is not explicitly listed as a collaborator by email. Fix: owner must open Share → add the OAuth account (e.g. {{GOOGLE_OAUTH_EMAIL}}) by name. Direct file shares (Drive attachments shared to the email) work immediately — the "Anyone with link" gap only affects Docs/files not explicitly added. Google Workspace org restrictions may also block external sharing at the admin level regardless of share settings.
+
+ A Google Doc shared via "Anyone with the link can view/edit" still returns 404 via the Drive API if the OAuth account is not explicitly listed as a collaborator (editor/viewer by email). The export URL (`/export?format=txt`) via curl also fails with a login redirect page. Fix: the owner must open Share → add the OAuth account email (e.g. {{GOOGLE_OAUTH_EMAIL}}) explicitly by name. Files shared directly to the email (like Drive file attachments) work immediately. Google Docs in another user's Workspace org may also be restricted at the org level regardless of share settings.
+
+PITFALL: **"Shared with {{GOOGLE_OAUTH_EMAIL}}" ≠ immediately API-accessible.** Even after the user shares a doc, the Drive API can return 404 or 403. Two root causes:
+1. The share was set to "Anyone with the link" — the API requires the email be added **directly** as an editor/viewer (confirm in the share dialog that the email shows up by name, not just "Anyone").
+2. The doc is inside a **restricted Google Workspace org** that blocks cross-org API access — even when the browser link works. In that case, the owning org's OAuth app is the only one that can access via API.
+- 404 on metadata = file is invisible to the account entirely.
+- 403 PERMISSION_DENIED from Docs API = file is in Drive but org policy blocks it.
+- Workaround: ask user to confirm email is listed by name in share dialog; if still 404, offer to draft in a new doc under the accessible account instead.
+
+**PITFALL: "Anyone with the link" sharing does NOT make a file accessible via Drive API.** If a doc is shared as "Anyone with the link can view/edit", the Drive API still returns 404 for accounts that haven't been directly granted access. The authenticated OAuth account (e.g. `{{GOOGLE_OAUTH_EMAIL}}`) must be **explicitly listed as an editor/viewer** in the Share dialog (by email, not just link sharing). Symptoms:
+- Drive metadata: `404 File not found`
+- Docs API: `403 PERMISSION_DENIED`
+- These are two different errors but both mean the same thing: the file is not visible to the account
+- Force-refreshing the token does NOT help — the issue is share permissions, not token freshness
+
+**Diagnosis checklist when seeing 404/403 on a supposedly-shared doc:**
+1. Confirm the share dialog shows the OAuth email listed **by name** under "People with access"
+2. If it shows only "Anyone with the link" — the file owner must add the email directly
+3. If the file is in a Google Workspace org (e.g. a company domain), external sharing may be blocked by the org's admin policy — the owner must check Workspace sharing settings
+4. Token refresh will not fix a permissions issue — check permissions first before refreshing
+
+PITFALL: **Image-based PDFs return 0 chars from pymupdf** — `page.get_text()` returns empty string, and `get_text("blocks")` returns only one block of type `1` (image). These PDFs are scans with no embedded text layer. Detection: `page.get_text("dict")["blocks"]` returns a single block with `"type": 1` and `"image"` key.
+
+**OCR pipeline for image-based PDFs:**
+```bash
+# Install once
+sudo apt-get install -y tesseract-ocr poppler-utils
+~/.hermes/hermes-agent/venv/bin/pip3 install pytesseract pdf2image
+```
+```python
+# Run as background job (OCR is slow — 1-3 min per PDF at dpi=150)
+import pytesseract
+from pdf2image import convert_from_path
+
+images = convert_from_path("/tmp/file.pdf", dpi=150)  # dpi=150 is good tradeoff speed/quality
+full_text = ""
+for i, img in enumerate(images):
+    full_text += f"\n--- Page {i+1} ---\n{pytesseract.image_to_string(img)}"
+with open("/tmp/file_ocr.txt", "w") as f:
+    f.write(full_text)
+```
+Always run OCR as `terminal(background=True, notify_on_complete=True)` — it takes 2-5 min for a 10-page PDF. Never run synchronously.
 
 PITFALL: `web_extract("file:///tmp/...")` is **blocked** — the tool rejects local file:// URLs as "private network address". To read downloaded PDFs, use `pymupdf` via terminal instead:
 ```python
@@ -332,7 +404,17 @@ print(r['output'])
 ```
 `pymupdf` is available in the Hermes venv. Works for all PDFs including scanned ones (with embedded text).
 
-PITFALL: `drive files copy` returns 404 if the template file is not in the authenticated user's Drive — even if it's publicly shared. The file must be owned by or explicitly shared (edit/view) with the OAuth account. Ask the user to share the file with the OAuth account's email, or use `Make a copy` in Google Docs UI first.
+**PITFALL: `drive files copy` returns 404 if the template file is not in the authenticated user's Drive — even if it's publicly shared. The file must be owned by or explicitly shared (edit/view) with the OAuth account. Ask the user to share the file with the OAuth account's email, or use `Make a copy` in Google Docs UI first.
+
+**PITFALL: Cannot move My Drive files directly into a Shared Drive** — `files.update` with `addParents=<shared_drive_folder>` returns 403 even with `supportsAllDrives=true` if the file is owned by another Google account and `canMoveItemIntoTeamDrive=false`. Workaround: use `files.copy` to copy the file into the Shared Drive folder instead. The original stays in My Drive (user can delete manually). Pattern:
+```python
+result = gapi("POST", f"files/{doc_id}/copy",
+    {"name": name, "parents": [TARGET_SHARED_FOLDER_ID]},
+    {"supportsAllDrives": "true"}
+)
+new_id = result["id"]
+```
+Check `capabilities.canMoveItemIntoTeamDrive` on the file metadata first — if False, go straight to copy.
 
 PITFALL: Google Docs API (`docs batchUpdate`) requires the **`documents`** scope (not `documents.readonly`) and the **Docs API must be enabled** in Google Cloud Console. If 403: enable at https://console.developers.google.com/apis/api/docs.googleapis.com/overview?project=PROJECT_ID
 
@@ -432,6 +514,335 @@ All commands return JSON via `gws --format json`. Key output shapes:
 
 Parse output with `jq` or read JSON directly.
 
+### Working with Google Docs Tabs (Multi-Tab Documents)
+
+Google Docs supports multiple tabs per document (visible in the UI as separate tabbed sections). The API requires explicit opt-in and tab targeting.
+
+**Read a specific tab:**
+```python
+# MUST pass includeTabsContent=true — default response returns tabs=[] (empty)
+doc = gapi("GET", f"https://docs.googleapis.com/v1/documents/{doc_id}",
+           params={"includeTabsContent": "true"})
+
+for tab in doc.get("tabs", []):
+    tp = tab.get("tabProperties", {})
+    print(tp.get("title"), tp.get("tabId"), tp.get("index"))
+    # Body lives inside documentTab, not at top level
+    body = tab.get("documentTab", {}).get("body", {}).get("content", [])
+```
+
+**Write to a specific tab:**
+```python
+# All location/range objects need a "tabId" field to target the right tab
+gapi("POST", f"https://docs.googleapis.com/v1/documents/{doc_id}:batchUpdate", {
+    "requests": [{
+        "insertText": {
+            "location": {"index": 1, "tabId": "t.8zhabhu6lm95"},
+            "text": "content here"
+        }
+    }]
+})
+```
+
+**Apply styles to a specific tab:**
+```python
+style_requests.append({"updateParagraphStyle": {
+    "range": {
+        "startIndex": p["start"],
+        "endIndex": p["end"] - 1,
+        "tabId": "t.8zhabhu6lm95"   # ← required
+    },
+    "paragraphStyle": {"namedStyleType": "HEADING_1"},
+    "fields": "namedStyleType"
+}})
+```
+
+**Delete content in a specific tab:**
+```python
+gapi("POST", f"https://docs.googleapis.com/v1/documents/{doc_id}:batchUpdate", {
+    "requests": [{"deleteContentRange": {
+        "range": {
+            "startIndex": 1,
+            "endIndex": end_index - 1,
+            "tabId": "t.8zhabhu6lm95"
+        }
+    }}]
+})
+```
+
+**PITFALL: `tabs=[]` without `includeTabsContent=true`** — the default GET response returns an empty `tabs` array. Always pass `?includeTabsContent=true` when working with tabbed docs. The tab ID is the fragment after `#tab=` in the document URL (e.g. `t.8zhabhu6lm95`).
+
+**PITFALL: body content is nested deeper** — with tabs, content lives at `tab["documentTab"]["body"]["content"]`, not `doc["body"]["content"]`. The top-level `doc["body"]` is empty when tabs are present.
+
+---
+
+### Creating a Long-Form Google Doc from Scratch (with Heading Styles)
+
+Use this pattern when generating a structured document (report, spec, proposal) programmatically — not from a template.
+
+### The Two-Pass Approach (confirmed working — 2026-05-21)
+
+**Why two passes:** You must insert all text first, then read the document back to get paragraph `startIndex`/`endIndex` values, then apply styles. You cannot predict indices before insertion because Google Docs assigns them after the API inserts content.
+
+**Pass 1 — Create doc and insert all text:**
+```python
+import sys, os, json, urllib.request
+
+hermes_home = os.environ.get("HERMES_HOME", os.path.expanduser("~/.hermes"))
+skill_dir = f"{hermes_home}/skills/productivity/google-workspace"
+sys.path.insert(0, f"{skill_dir}/scripts")
+from gws_bridge import get_valid_token
+
+token = get_valid_token()
+headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+
+def gapi(method, url, body=None):
+    data = json.dumps(body).encode() if body else None
+    req = urllib.request.Request(url, data=data, headers=headers, method=method)
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return json.loads(r.read())
+
+# 1. Create the doc
+result = gapi("POST", "https://docs.googleapis.com/v1/documents", {"title": "My Document Title"})
+doc_id = result["documentId"]
+
+# 2. Insert ALL text in one batchUpdate at index 1
+doc_text = "Title Line\nSection 1 Heading\nBody paragraph...\n"
+gapi("POST", f"https://docs.googleapis.com/v1/documents/{doc_id}:batchUpdate", {
+    "requests": [{"insertText": {"location": {"index": 1}, "text": doc_text}}]
+})
+```
+
+**Pass 2 — Read paragraph indices, then apply styles:**
+```python
+# 3. Read back the doc to get paragraph positions
+doc = gapi("GET", f"https://docs.googleapis.com/v1/documents/{doc_id}")
+
+paragraphs = []
+for elem in doc["body"]["content"]:
+    if "paragraph" in elem:
+        text = ""
+        for pe in elem["paragraph"].get("elements", []):
+            if "textRun" in pe:
+                text += pe["textRun"].get("content", "")
+        paragraphs.append({
+            "start": elem["startIndex"],
+            "end": elem["endIndex"],
+            "text": text.strip()
+        })
+
+# 4. Find headings by regex pattern, collect (start, end) tuples
+import re
+h1_ranges = []
+h2_ranges = []
+for p in paragraphs:
+    if re.match(r'^\d+\.\s+[A-Z]', p["text"]) and len(p["text"]) < 80:
+        h1_ranges.append((p["start"], p["end"] - 1))
+    elif re.match(r'^\d+\.\d+\s+[A-Z]', p["text"]) and len(p["text"]) < 80:
+        h2_ranges.append((p["start"], p["end"] - 1))
+
+# 5. Apply styles in one batchUpdate
+style_requests = []
+
+# Title
+style_requests.append({
+    "updateParagraphStyle": {
+        "range": {"startIndex": paragraphs[0]["start"], "endIndex": paragraphs[0]["end"] - 1},
+        "paragraphStyle": {"namedStyleType": "TITLE"},
+        "fields": "namedStyleType"
+    }
+})
+
+for s, e in h1_ranges:
+    style_requests.append({
+        "updateParagraphStyle": {
+            "range": {"startIndex": s, "endIndex": e},
+            "paragraphStyle": {"namedStyleType": "HEADING_1"},
+            "fields": "namedStyleType"
+        }
+    })
+
+for s, e in h2_ranges:
+    style_requests.append({
+        "updateParagraphStyle": {
+            "range": {"startIndex": s, "endIndex": e},
+            "paragraphStyle": {"namedStyleType": "HEADING_2"},
+            "fields": "namedStyleType"
+        }
+    })
+
+gapi("POST", f"https://docs.googleapis.com/v1/documents/{doc_id}:batchUpdate",
+     {"requests": style_requests})
+```
+
+### Named Style Types
+| Style | `namedStyleType` value |
+|---|---|
+| Document title | `TITLE` |
+| Subtitle | `SUBTITLE` |
+| H1 | `HEADING_1` |
+| H2 | `HEADING_2` |
+| H3 | `HEADING_3` |
+| Body | `NORMAL_TEXT` |
+
+### Targeted Slide Block Replacement (find-by-header pattern)
+
+When rewriting one or two slides in a multi-slide doc without touching the rest, use paragraph index scanning to find the exact range:
+
+```python
+doc = gapi("GET", f"https://docs.googleapis.com/v1/documents/{doc_id}")
+paragraphs = []
+for elem in doc["body"]["content"]:
+    if "paragraph" in elem:
+        text = "".join(
+            pe["textRun"].get("content", "")
+            for pe in elem["paragraph"].get("elements", [])
+            if "textRun" in pe
+        )
+        paragraphs.append({"start": elem["startIndex"], "end": elem["endIndex"], "text": text.strip()})
+
+# Find target slide start and next slide start
+target_start = next_start = None
+for p in paragraphs:
+    if "Slide N｜Target Title" in p["text"] and target_start is None:
+        target_start = p["start"]
+    if target_start and "Slide N+1｜" in p["text"]:
+        next_start = p["start"]
+        break
+
+# Delete old block, insert new one in one batchUpdate
+gapi("POST", f"https://docs.googleapis.com/v1/documents/{doc_id}:batchUpdate", {
+    "requests": [
+        {"deleteContentRange": {"range": {"startIndex": target_start, "endIndex": next_start - 1}}},
+        {"insertText": {"location": {"index": target_start}, "text": new_slide_text}}
+    ]
+})
+```
+
+**Key points:**
+- Always re-read paragraph indices AFTER any prior edit — indices shift
+- Use a placeholder trick when `replaceAllText` won't match a section header: replace a unique short string first (1 hit confirmed), then re-read indices and do delete+insert
+- `next_start - 1` as the delete end excludes the newline before the next slide header
+- If replacing Slides 3 AND 4, replace S3 first, re-read doc, then find S4's new position before replacing it
+
+### Full Doc Rewrite Pattern (clear + reinsert)
+
+When a doc needs to be **completely replaced** (not edited), use this sequence:
+
+```python
+# 1. Get current end_index
+doc = gapi("GET", f"https://docs.googleapis.com/v1/documents/{doc_id}")
+end_index = doc["body"]["content"][-1]["endIndex"]
+
+# 2. Delete all content except last char (index 1 to end_index - 1)
+if end_index > 2:
+    gapi("POST", f"https://docs.googleapis.com/v1/documents/{doc_id}:batchUpdate", {
+        "requests": [{"deleteContentRange": {"range": {"startIndex": 1, "endIndex": end_index - 1}}}]
+    })
+
+# 3. Insert new content at index 1
+gapi("POST", f"https://docs.googleapis.com/v1/documents/{doc_id}:batchUpdate", {
+    "requests": [{"insertText": {"location": {"index": 1}, "text": new_doc_text}}]
+})
+
+# 4. Re-read doc and apply styles (two-pass pattern)
+```
+
+This is the correct pattern for iterative document drafting — reuse the same doc_id across versions rather than creating new docs each time.
+
+### Iterative Patching Pattern for Multi-Version Documents
+
+When a long-form Google Doc needs multiple rounds of content updates (e.g. investor docs revised across a session), use **targeted `replaceAllText` batches** rather than delete-all + reinsert. This preserves heading styles and avoids re-styling the entire doc from scratch.
+
+**Pattern: replaceAllText batch**
+```python
+def r(old, new):
+    return {"replaceAllText": {
+        "containsText": {"text": old, "matchCase": True},
+        "replaceText": new
+    }}
+
+requests = [r("old text 1", "new text 1"), r("old text 2", "new text 2")]
+result = gapi("POST", f"https://docs.googleapis.com/v1/documents/{doc_id}:batchUpdate",
+              {"requests": requests})
+# Check hit count per replacement:
+for i, reply in enumerate(result.get("replies", [])):
+    n = reply.get("replaceAllText", {}).get("occurrencesChanged", 0)
+    print(f"Patch {i}: {n} hit(s)")
+```
+
+**PITFALL: `replaceAllText` on multi-line strings almost always returns 0 hits** — even when the string looks correct. Two causes compound: (1) Google Docs exports with `\r\n` line endings, not `\n`; (2) empty paragraphs between blocks add extra `\r\n\r\n` that your match string doesn't include. Diagnosis: export the doc as `text/plain` via Drive API and use `repr()` to inspect the exact byte sequence around your target string before building the match.
+
+When `replaceAllText` fails on a block you need to replace, fall back to the **paragraph-index delete+reinsert pattern**:
+```python
+# 1. Read doc to get paragraph index ranges
+doc = gapi("GET", f"https://docs.googleapis.com/v1/documents/{doc_id}")
+paragraphs = []
+for elem in doc["body"]["content"]:
+    if "paragraph" in elem:
+        text = "".join(pe["textRun"].get("content","") for pe in elem["paragraph"].get("elements",[]) if "textRun" in pe)
+        paragraphs.append({"start": elem["startIndex"], "end": elem["endIndex"], "text": text.strip()})
+
+# 2. Identify the start/end indices of the block you want to replace
+delete_start = paragraphs[N]["start"]   # first para to delete
+delete_end   = paragraphs[M]["end"] - 1 # last para to delete (exclusive of its final \n)
+
+# 3. Delete then insert in one batchUpdate — order matters (delete first)
+gapi("POST", f"https://docs.googleapis.com/v1/documents/{doc_id}:batchUpdate", {
+    "requests": [
+        {"deleteContentRange": {"range": {"startIndex": delete_start, "endIndex": delete_end}}},
+        {"insertText": {"location": {"index": delete_start}, "text": new_text}}
+    ]
+})
+```
+This is reliable regardless of line ending quirks. Use it whenever `replaceAllText` returns 0 hits after two attempts. Two fixes:
+1. Use short unique single-line anchors (most reliable — avoids the problem entirely)
+2. Export the doc and check exact line endings with `repr()` before building the match string
+
+```python
+# Diagnose before matching multi-line blocks:
+req = urllib.request.Request(
+    f"https://www.googleapis.com/drive/v3/files/{doc_id}/export?mimeType=text/plain",
+    headers=headers
+)
+with urllib.request.urlopen(req, timeout=30) as r:
+    text = r.read().decode("utf-8")
+idx = text.find("Section heading you want to match")
+print(repr(text[idx:idx+300]))  # see exact line endings
+```
+
+**PITFALL: 0 hits on multi-line match** — Split into multiple single-sentence patches rather than one large block. Each sentence is unique enough to match reliably.
+
+**Structural audit before final delivery** — Before sending to users, export and scan for:
+1. Duplicate content (appendices that repeat earlier sections — cut them)
+2. Broken section numbering (new sections inserted without renumbering children)
+3. Two tables with conflicting numbers on the same topic (investor will notice)
+4. Orphaned blocks with no heading (content floating between sections)
+5. Low-value redundant sections (sub-sections that restate parent section conclusion)
+
+**Full delete + reinsert** is better when: content is >50% changed, or heading structure changes significantly. After full reinsert, always re-run the heading style pass:
+```python
+# Re-apply styles after full reinsert
+import re
+for p in paragraphs[2:]:
+    t = p["text"]
+    if re.match(r'^\d+\.\s+[A-Z][A-Z\s\-—&,:\/]+$', t) and len(t) < 100:
+        # → HEADING_1
+    elif re.match(r'^\d+\.\d+[a-z]?\s+', t) and len(t) < 120:
+        # → HEADING_2
+    elif re.match(r'^APPENDIX [A-Z]', t):
+        # → HEADING_1
+```
+
+### Pitfalls for Long-Form Doc Creation
+
+- ❌ **Do NOT try to calculate indices before insertion** — Google Docs assigns indices after content is written. Always read the doc back after insertion.
+- ❌ **`endIndex` includes the newline character** — when setting a style range, use `endIndex - 1` to avoid styling the newline, which can bleed the style into the next paragraph.
+- ✅ **Insert all text in a single `insertText` request at index 1** — multiple sequential inserts at index 1 reverse the order. If you must insert in chunks, insert in reverse order, or concatenate into one string.
+- ✅ **TOC vs content duplicates**: If your text includes a Table of Contents listing headings before the actual sections, the regex will match both. Filter by `startIndex > <threshold>` to only style the actual content sections, not the TOC entries.
+- ✅ **Batch all style requests into one `batchUpdate`** — fewer API calls, and avoids index drift between calls.
+- ✅ **`HEADING_3` is good for named sub-sections** (e.g. `COMPONENT A —`, `PHASE 1 —`) identified by regex `r'^(COMPONENT|PHASE|CONTROL|SHIFT|PRINCIPLE)'`.
+
 ## Invoice Generation via Google Docs Template
 
 Pattern confirmed working (2026-05-15):
@@ -506,6 +917,163 @@ with urllib.request.urlopen(req, timeout=15) as resp:
 `sendUpdates=all` ensures all attendees receive the updated invite notification.
 
 The `get_valid_token()` function (not `refresh_google_token`) is the correct import from `gws_bridge.py`.
+
+## Taking a Screenshot of a Local HTML File (Puppeteer)
+
+Use when user asks for a screenshot of an HTML artifact (infographic, diagram, prototype) produced by the agent.
+
+**Confirmed working pattern (2026-05-22):**
+
+```bash
+# Step 1: Install Chrome (one-time, only if missing)
+~/.hermes/node/bin/puppeteer browsers install chrome
+# Installs to ~/.cache/puppeteer/chrome/linux-<version>/chrome-linux64/chrome
+
+# Step 2: Write screenshot script
+cat > /tmp/screenshot.mjs << 'EOF'
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const puppeteer = require('~/.hermes/node/lib/node_modules/puppeteer');
+
+const browser = await puppeteer.launch({
+  args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+  headless: true
+});
+const page = await browser.newPage();
+await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 2 });
+await page.goto('file:///tmp/your_file.html', { waitUntil: 'networkidle0' });
+await page.screenshot({ path: '/tmp/output.png', fullPage: true });
+await browser.close();
+console.log('OK');
+EOF
+
+# Step 3: Run
+node /tmp/screenshot.mjs
+```
+
+**Key pitfalls:**
+- ❌ `import puppeteer from 'puppeteer'` → `ERR_MODULE_NOT_FOUND` — puppeteer is installed globally at `~/.hermes/node/lib/node_modules/puppeteer`, NOT in node's default resolution path
+- ✅ Use `createRequire(import.meta.url)` + absolute path to require it
+- ❌ `--headless=new` flag not needed — default `headless: true` works
+- ❌ `execute_code` sandbox cannot run puppeteer — must use `terminal()`
+- ✅ After screenshot, display with `vision_analyze('/tmp/output.png')` to verify before sending
+- ✅ Use `MEDIA:/tmp/output.png` in response to deliver the image to Feishu/Telegram
+
+**Full delivery pattern:**
+```python
+# 1. Take screenshot via terminal()
+# 2. Verify with vision_analyze()
+# 3. Deliver with MEDIA:/tmp/output.png in response message
+```
+
+## Writing to a Specific Tab in a Multi-Tab Google Doc
+
+When a doc has multiple tabs (e.g. "Slides Framework" and "Pitching"), you must pass `tabId` on every insert/delete/style operation, otherwise the API defaults to the first tab.
+
+```python
+# Get tab IDs
+doc = gapi("GET", f"https://docs.googleapis.com/v1/documents/{doc_id}",
+           params={"includeTabsContent": "true"})
+for tab in doc.get("tabs", []):
+    tp = tab.get("tabProperties", {})
+    print(tp["title"], tp["tabId"])  # e.g. "Pitching" → "t.8zhabhu6lm95"
+
+# Insert text into a specific tab
+gapi("POST", f"https://docs.googleapis.com/v1/documents/{doc_id}:batchUpdate", {
+    "requests": [{
+        "insertText": {
+            "location": {"index": 1, "tabId": "t.8zhabhu6lm95"},
+            "text": "..."
+        }
+    }]
+})
+
+# Delete content in a specific tab (clear before rewrite)
+gapi("POST", f"https://docs.googleapis.com/v1/documents/{doc_id}:batchUpdate", {
+    "requests": [{
+        "deleteContentRange": {
+            "range": {"startIndex": 1, "endIndex": end_index - 1, "tabId": "t.8zhabhu6lm95"}
+        }
+    }]
+})
+
+# Apply styles in a specific tab
+style_requests.append({"updateParagraphStyle": {
+    "range": {"startIndex": p["start"], "endIndex": p["end"]-1, "tabId": "t.8zhabhu6lm95"},
+    "paragraphStyle": {"namedStyleType": "HEADING_1"},
+    "fields": "namedStyleType"
+}})
+```
+
+**⚠️ `doc.get("tabs", [])` returns empty unless you pass `includeTabsContent=true`** in the GET request. Without it, tabs appears as an empty list even when multiple tabs exist.
+
+## Finding Existing Docs Before Creating New Ones
+
+Before creating a new Google Doc, **always search first** — there may already be a relevant doc in Drive that should be updated instead. Search across both My Drive and Shared Drive:
+
+```python
+params = {
+    "includeItemsFromAllDrives": "true",
+    "supportsAllDrives": "true",
+    "q": "(name contains 'keyword' or fullText contains 'keyword') and mimeType='application/vnd.google-apps.document'",
+    "fields": "files(id,name,webViewLink,modifiedTime)",
+    "pageSize": "20",
+    "orderBy": "modifiedTime desc"
+}
+files = gapi("GET", "files", params_dict=params).get("files", [])
+```
+
+**PITFALL:** Searching by `fullText contains` in Shared Drive requires `corpora=drive` + `driveId`. Without it, `fullText` search may return empty even if the file exists.
+
+## Moving a Doc/File into a Folder
+
+To move an existing file into a new folder, you must pass BOTH `addParents` and `removeParents` to the PATCH endpoint:
+
+```python
+# First, get current parents
+doc_meta = gapi("GET", f"files/{file_id}", params_dict={"supportsAllDrives": "true", "fields": "id,name,parents"})
+current_parents = doc_meta.get("parents", [])
+
+# Then move
+gapi("PATCH", f"files/{file_id}",
+    {},
+    {
+        "addParents": new_folder_id,
+        "removeParents": ",".join(current_parents),
+        "supportsAllDrives": "true",
+        "fields": "id,name,parents"
+    })
+```
+
+**PITFALL:** Omitting `removeParents` leaves the file in both the old and new location — it does NOT move, it copies the parent reference.
+
+## Standard Post-Doc-Creation Routine
+
+Every time a Google Doc is created for Hunter/BusyCow, always do all three steps in order:
+
+1. **Share edit rights** to `{{OWNER_EMAIL}}` and `{{ADMIN_EMAIL}}`:
+```python
+emails = ["{{OWNER_EMAIL}}", "{{ADMIN_EMAIL}}"]
+for email in emails:
+    body = {"role": "writer", "type": "user", "emailAddress": email}
+    data = json.dumps(body).encode()
+    req = urllib.request.Request(
+        f"https://www.googleapis.com/drive/v3/files/{doc_id}/permissions?sendNotificationEmail=false",
+        data=data, headers=headers, method="POST"
+    )
+    with urllib.request.urlopen(req, timeout=15) as resp:
+        print(json.loads(resp.read()))
+```
+
+2. **Send the link via Feishu** to `{{OWNER_TASK_CHAT_ID}}` (Hunter's Task Tracker chat):
+```
+📄 Google Doc created: <Title>
+https://docs.google.com/document/d/<DOC_ID>/edit
+```
+
+3. **Confirm** in the chat response that both sharing and Feishu message are done.
+
+---
 
 ## Rules
 
