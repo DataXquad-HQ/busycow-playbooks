@@ -89,7 +89,7 @@ For every file, apply these rules:
 | Google Doc / Drive IDs | `{{GOOGLE_DOC_TEMPLATE_ID}}` |
 | IP addresses | `{{SERVER_IP}}` |
 | Internal product names ([Product], [Product], [Product]) | `[Product]` or `[your product lines]` |
-| Specific client/partner names (HKRFID, Onnet, etc.) | `[Client]` or `[Partner]` |
+| Specific client/partner names ([Client], [Client], etc.) | `[Client]` or `[Partner]` |
 | Personal names / usernames (Hunter, the_owner) | `the owner` or omit |
 | Personal file paths (/home/username) | `~` |
 | Internal business logic (billing entity rules, commission %) | Generic equivalent or remove |
@@ -122,7 +122,7 @@ CONFIDENTIAL_PATTERNS = [
     (r'[a-z]+@dataxquad\.com', 'internal email'),
     (r'\bhunter_lin\b', 'personal username'),
     # Internal partner/client names
-    (r'\b(HKRFID|AICities|Onnet|HeadWorker|VoiceBot)\b', 'internal partner name'),
+    (r'\b([Client]|[Client]|[Client]|HeadWorker|VoiceBot)\b', 'internal partner name'),
 ]
 
 def scan(directory):

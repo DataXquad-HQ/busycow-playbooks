@@ -39,5 +39,5 @@ Naming conventions established May 2026:
 - BL folders (BusyCow, [Product], etc.): plain names, no prefix
 - Inside each BL: `00_Inbox`, `01_Core`, `02_Sales & Marketing`, `03_Commercial/Business`, `04_...`, `99_Archived`
 - Projects: ALL in `[DX] Projects/` (not inside BL folders) — named `[BL] Project Name Year`
-- Clients: ALL in `[DX] Clients/` — each client has BL subfolders inside (e.g. HKRFID/BusyCow/)
+- Clients: ALL in `[DX] Clients/` — each client has BL subfolders inside (e.g. [Client]/BusyCow/)
 - Hunter's rule: "find by client name first, not by BL first"

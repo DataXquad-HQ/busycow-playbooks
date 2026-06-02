@@ -59,7 +59,15 @@ hermes setup lark
 ```
 Follow the prompts. At the end, Hermes will confirm your Lark user ID is in the approved list.
 
-**Step 5 — (Optional) Google Workspace**
+**Step 5 — Tavily Web Search**
+
+All agent profiles use Tavily for real-time web search. Register at [tavily.com](https://tavily.com) and set the API key:
+
+```bash
+hermes config set search.tavily_api_key YOUR_TAVILY_API_KEY
+```
+
+**Step 6 — (Optional) Google Workspace**
 
 If you use Gmail / Google Calendar / Drive:
 ```bash
@@ -106,6 +114,10 @@ What this does:
 Run each playbook SETUP.md to install the Lark Base schema, skills, chat groups, and cron jobs for that business context.
 
 ```bash
+# Multi-Agent Team — install first (creates the shared Bitable schema + all six agent profiles)
+curl -fsSL https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/playbooks/agents/SETUP.md \
+  | hermes "Follow these setup instructions exactly"
+
 # Sales & Ops (CRM + pipeline + tasks)
 curl -fsSL https://raw.githubusercontent.com/DataXquad-HQ/busycow-playbooks/main/playbooks/sales/SETUP.md \
   | hermes "Follow these setup instructions exactly"
@@ -248,6 +260,25 @@ Financial modeling, investor forecasts, Google Sheets models, and invoice genera
 | `generating-invoices` | Generate invoices from CRM data, fill Doc template, export PDF |
 
 → [`playbooks/finance/SETUP.md`](playbooks/finance/SETUP.md)
+
+---
+
+### Multi-Agent Team
+All six agent profiles (Iris, Steve, Leo, Quinn, Maya, Rex), shared Bitable schema (Goals → Tasks → CRM → Commercial Documents), cron jobs, and GBrain routing rules.
+
+**Install this playbook first** — it creates the Bitable schema that all other playbooks link tasks into.
+
+| Artifact | What it creates |
+|---|---|
+| 6 Hermes profiles | default (Iris), steve, leo, quinn, maya, rex |
+| SOUL.md per profile | Role, responsibilities, authority, hard limits |
+| Shared skills | 16 skills symlinked into all profiles |
+| Role-specific skills | Per-agent skill sets |
+| Cron jobs | Daily dispatcher, nightly dream, task briefing, weekly audit |
+| Lark Bitable schema | Goals, Initiatives, Tasks, Accounts, Contacts, Activities, Opportunities, Partnerships, Quotations & Invoices |
+
+→ [`playbooks/agents/SETUP.md`](playbooks/agents/SETUP.md)
+→ [`playbooks/agents/SCHEMA.md`](playbooks/agents/SCHEMA.md)
 
 ---
 
