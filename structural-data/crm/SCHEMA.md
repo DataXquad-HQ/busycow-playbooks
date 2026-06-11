@@ -49,25 +49,33 @@ Create via Settings → Data Model or via the metadata API.
 
 ### Account (standard object — renamed from Company)
 
-> **Purpose:** Account master record (object renamed from Company in Twenty). This is a fact sheet — who the company is, what they do, where they sit. The `overview` field is the canonical "company bio". `enrichmentOverview` holds the latest market/news intel updated by enrichment runs.
+> **Purpose:** Account master record (object renamed from Company in Twenty). This is a fact sheet — who the company is, what they do, where they sit. The `overview` field is the canonical "account bio". `enrichmentOverview` holds the latest market/news intel updated by enrichment runs.
+>
+> **App column key:** `Standard` = built into Twenty, no creation needed — only rename if label differs. `Custom` = must be created via Settings → Data Model or metadata API.
 
-| Field | Type | Options | Description |
-|-------|------|---------|-------------|
-| `name` | TEXT *(auto)* | — | Company display name (Twenty built-in primary field) |
-| `registeredNameEn` | TEXT | — | Official registered company name in English |
-| `registeredNameCh` | TEXT | — | Official registered company name in Chinese |
-| `overview` | TEXT | — | Account bio: who they are, what they do, their core business. This is a stable fact, not news. |
-| `status` | SELECT | `HOT` / `WARM` / `COLD` | Sales temperature — derived from Contact activity and last contact date |
-| `accountType` | MULTI_SELECT | `CLIENT` / `PARTNER` / `PROSPECT` / `VENDOR` / `DIRECT` | The role(s) this company plays in our ecosystem |
-| `industry` | SELECT | `TECH_SAAS` / `HEALTHCARE` / `MANUFACTURING_TRADING` / `WATER_UTILITIES` / `RETAIL_ECOMMERCE` / `LOGISTICS_TRANSPORT` / `CONSTRUCTION_PROPERTY` / `FINANCE_INSURANCE` / `EDUCATION` / `GOVERNMENT_PUBLIC` / `FNB_HOSPITALITY` / `OTHER` | Primary industry vertical |
-| `country` | SELECT | `TAIWAN` / `HONG_KONG` / `MALAYSIA` / `OMAN` / `SINGAPORE` / `JAPAN` / `CHINA` / `OTHER` | Primary country of operation |
-| `hqAddress` | TEXT | — | Headquarters street address |
-| `companyEmail` | TEXT | — | General company contact email |
-| `companyLinkedIn` | LINKS | — | LinkedIn company page URL |
-| `website` | LINKS | — | Official company website (Twenty built-in) |
-| `lastContactDate` | DATE_TIME | — | Date of most recent interaction with any contact at this company |
-| `lastEnrichedDate` | DATE_TIME | — | Timestamp of the last enrichment run for this account |
-| `enrichmentOverview` | TEXT | — | Latest market intel, news, or enrichment summary. Updated by enrichment runs — not a stable fact. |
+| Field | App | Type | Options | Description |
+|-------|-----|------|---------|-------------|
+| `name` | **Standard** *(rename → "Account Name")* | TEXT | — | Account display name — the company's common name (Twenty built-in primary field) |
+| `domainName` | **Standard** *(rename → "Website")* | LINKS | — | Official company website / domain (Twenty built-in as "Domain Name") |
+| `annualRevenue` | **Standard** | CURRENCY | — | Annual revenue or estimated ARR (Twenty built-in) |
+| `address` | **Standard** | ADDRESS | — | Registered / HQ address (Twenty built-in) |
+| `companyLinkedIn` | **Standard** *(rename → "LinkedIn")* | LINKS | — | LinkedIn company page URL (Twenty built-in as "Company Linkedin") |
+| `createdAt` | **Standard** | DATE_TIME | — | Record creation timestamp (Twenty built-in, system field) |
+| `updatedAt` | **Standard** | DATE_TIME | — | Last update timestamp (Twenty built-in, system field) |
+| `deletedAt` | **Standard** | DATE_TIME | — | Soft-delete timestamp (Twenty built-in, system field) |
+| `createdBy` | **Standard** | ACTOR | — | Who created this record (Twenty built-in, system field) |
+| `updatedBy` | **Standard** | ACTOR | — | Who last updated this record (Twenty built-in, system field) |
+| `registeredNameEn` | Custom | TEXT | — | Official registered company name in English |
+| `registeredNameCh` | Custom | TEXT | — | Official registered company name in Chinese |
+| `overview` | Custom | TEXT | — | Account bio: who they are, what they do, their core business. This is a stable fact, not news. |
+| `status` | Custom | SELECT | `HOT` / `WARM` / `COLD` | Sales temperature — derived from Contact activity and last contact date |
+| `accountType` | Custom *(field name: "Type")* | MULTI_SELECT | `CLIENT` / `PARTNER` / `PROSPECT` / `VENDOR` / `DIRECT` | The role(s) this account plays in our ecosystem |
+| `industry` | Custom | SELECT | `TECH_SAAS` / `HEALTHCARE` / `MANUFACTURING_TRADING` / `WATER_UTILITIES` / `RETAIL_ECOMMERCE` / `LOGISTICS_TRANSPORT` / `CONSTRUCTION_PROPERTY` / `FINANCE_INSURANCE` / `EDUCATION` / `GOVERNMENT_PUBLIC` / `FNB_HOSPITALITY` / `OTHER` | Primary industry vertical |
+| `country` | Custom | SELECT | `TAIWAN` / `HONG_KONG` / `MALAYSIA` / `OMAN` / `SINGAPORE` / `JAPAN` / `CHINA` / `OTHER` | Primary country of operation |
+| `companyEmail` | Custom | TEXT | — | General company contact email |
+| `lastContactDate` | Custom | DATE_TIME | — | Date of most recent interaction with any contact at this account |
+| `lastEnrichedDate` | Custom | DATE_TIME | — | Timestamp of the last enrichment run for this account |
+| `enrichmentOverview` | Custom | TEXT | — | Latest market intel, news, or enrichment summary. Updated by enrichment runs — not a stable fact. |
 
 **Relations (auto-created by Twenty or via metadata API):**
 - `people` → Contact (one company, many contacts)
@@ -82,20 +90,31 @@ Create via Settings → Data Model or via the metadata API.
 
 ### Contact (standard object — renamed from Person)
 
-> **Purpose:** Individual contact master record (object renamed from Person in Twenty). Source tracks how we first met this person — it lives on the Contact, not the Company.
+> **Purpose:** Individual contact master record (object renamed from Person in Twenty). Source tracks how we first met this person — it lives on the Contact, not the Account.
+>
+> **App column key:** `Standard` = built into Twenty, no creation needed — only rename if label differs. `Custom` = must be created via Settings → Data Model or metadata API.
 
-| Field | Type | Options | Description |
-|-------|------|---------|-------------|
-| `name` | FULL_NAME *(auto)* | — | First + last name (Twenty built-in) |
-| `emails` | EMAILS *(auto)* | — | Primary email + additional emails (Twenty built-in) |
-| `phones` | PHONES *(auto)* | — | Phone number(s) (Twenty built-in) |
-| `whatsapp` | TEXT | — | WhatsApp number or handle |
-| `status` | SELECT | `HOT` / `WARM` / `COLD` / `INACTIVE` | Engagement temperature — updated based on interaction recency |
-| `country` | SELECT | `TAIWAN` / `HONG_KONG` / `CHINA` / `MALAYSIA` / `JAPAN` / `SINGAPORE` / `OTHER` | Country this contact is based in |
-| `decisionRole` | SELECT | `DECISION_MAKER` / `CHAMPION` / `INFLUENCER` / `END_USER` / `GATEKEEPER` | This person's role in the buying / partnership decision |
-| `source` | SELECT | `OUTBOUND_MAYA` / `INBOUND_WEB` / `REFERRAL` / `EVENT` / `PARTNER` | How we first connected with this person |
-| `lastContactDate` | DATE_TIME | — | Date of most recent interaction with this person |
-| `notes` | TEXT | — | Personal context, preferences, background notes |
+| Field | App | Type | Options | Description |
+|-------|-----|------|---------|-------------|
+| `name` | **Standard** | FULL_NAME | — | First + last name (Twenty built-in primary field) |
+| `emails` | **Standard** | EMAILS | — | Primary email + additional emails (Twenty built-in) |
+| `phones` | **Standard** | PHONES | — | Phone number(s) (Twenty built-in) |
+| `linkedinLink` | **Standard** | LINKS | — | LinkedIn profile URL (Twenty built-in) |
+| `jobTitle` | **Standard** | TEXT | — | Job title (Twenty built-in) |
+| `avatarUrl` | **Standard** | TEXT | — | Profile photo URL (Twenty built-in, system field) |
+| `city` | **Standard** | TEXT | — | City (Twenty built-in) |
+| `createdAt` | **Standard** | DATE_TIME | — | Record creation timestamp (Twenty built-in, system field) |
+| `updatedAt` | **Standard** | DATE_TIME | — | Last update timestamp (Twenty built-in, system field) |
+| `deletedAt` | **Standard** | DATE_TIME | — | Soft-delete timestamp (Twenty built-in, system field) |
+| `createdBy` | **Standard** | ACTOR | — | Who created this record (Twenty built-in, system field) |
+| `updatedBy` | **Standard** | ACTOR | — | Who last updated this record (Twenty built-in, system field) |
+| `whatsapp` | Custom | TEXT | — | WhatsApp number or handle |
+| `status` | Custom | SELECT | `HOT` / `WARM` / `COLD` / `INACTIVE` | Engagement temperature — updated based on interaction recency |
+| `country` | Custom | SELECT | `TAIWAN` / `HONG_KONG` / `CHINA` / `MALAYSIA` / `JAPAN` / `SINGAPORE` / `OTHER` | Country this contact is based in |
+| `decisionRole` | Custom | SELECT | `DECISION_MAKER` / `CHAMPION` / `INFLUENCER` / `END_USER` / `GATEKEEPER` | This person's role in the buying / partnership decision |
+| `source` | Custom | SELECT | `OUTBOUND_MAYA` / `INBOUND_WEB` / `REFERRAL` / `EVENT` / `PARTNER` | How we first connected with this person |
+| `lastContactDate` | Custom | DATE_TIME | — | Date of most recent interaction with this person |
+| `notes` | Custom | TEXT | — | Personal context, preferences, background notes |
 
 **Relations:**
 - `company` → Account (many-to-one)
@@ -109,24 +128,32 @@ Create via Settings → Data Model or via the metadata API.
 ### Deal (standard object — renamed from Opportunity)
 
 > **Purpose:** Sales pipeline deal (object renamed from Opportunity in Twenty). One deal = one sales motion for one product/service to one account.
+>
+> **App column key:** `Standard` = built into Twenty, no creation needed — only rename if label differs. `Custom` = must be created via Settings → Data Model or metadata API.
 
-| Field | Type | Options | Description |
-|-------|------|---------|-------------|
-| `name` | TEXT *(auto)* | — | Deal name, e.g. "GeoKernel - Acme Precision Q3 2026" (Twenty built-in) |
-| `stage` | SELECT *(auto)* | `NEW` / `SCREENING` / `MEETING` / `PROPOSAL` / `CUSTOMER` / `WON` / `LOST` | Twenty built-in deal stage |
-| `dealId` | TEXT | — | Human-readable ID, e.g. `DEAL-2026-001` |
-| `currentStatusSummary` | TEXT | — | Narrative pipeline state: why at this stage, what's blocking next step |
-| `nextActionSummary` | TEXT | — | The single most important next action to move this deal forward |
-| `priority` | SELECT | `HIGH` / `MEDIUM` / `LOW` | Deal priority for this week's focus |
-| `healthCheck` | SELECT | `ON_TRACK` / `NEEDS_FOLLOW_UP` / `AWAITING_RESPONSE` / `AT_RISK` | Current deal health signal |
-| `probability` | NUMBER | — | Estimated close probability as a percentage (0–100) |
-| `expectedValue` | CURRENCY | — | Estimated deal value (ACV/annual, in USD or local currency) |
-| `expectedCloseDate` | DATE_TIME | — | Forecast close date — 90% confidence, not a hard commit |
-| `nextFollowUpDate` | DATE_TIME | — | When to next reach out |
-| `lastUpdateDate` | DATE_TIME | — | Timestamp of the last meaningful update to this deal |
-| `riskIndicator` | SELECT | `LOW` / `MEDIUM` / `HIGH` | Manual risk flag — set when deal shows signs of stalling |
-| `weekReviewStatus` | SELECT | `REVIEWED` / `PENDING` / `NA` | Whether this deal was reviewed in the current weekly pipeline review |
-| `docLink` | LINKS | — | Link to proposal, contract draft, or supporting document |
+| Field | App | Type | Options | Description |
+|-------|-----|------|---------|-------------|
+| `name` | **Standard** *(rename → "Deal Name")* | TEXT | — | Deal name, e.g. "GeoKernel - Acme Precision Q3 2026" (Twenty built-in primary field) |
+| `stage` | **Standard** | SELECT | `NEW` / `SCREENING` / `MEETING` / `PROPOSAL` / `CUSTOMER` / `WON` / `LOST` | Twenty built-in deal stage |
+| `amount` | **Standard** *(rename → "Expected Value")* | CURRENCY | — | Deal value (Twenty built-in as "Amount") |
+| `closeDate` | **Standard** *(rename → "Expected Close Date")* | DATE_TIME | — | Forecast close date (Twenty built-in as "Close date") |
+| `pointOfContact` | **Standard** | RELATION | — | Primary contact / decision maker (Twenty built-in) |
+| `createdAt` | **Standard** | DATE_TIME | — | Record creation timestamp (Twenty built-in, system field) |
+| `updatedAt` | **Standard** | DATE_TIME | — | Last update timestamp (Twenty built-in, system field) |
+| `deletedAt` | **Standard** | DATE_TIME | — | Soft-delete timestamp (Twenty built-in, system field) |
+| `createdBy` | **Standard** | ACTOR | — | Who created this record (Twenty built-in, system field) |
+| `updatedBy` | **Standard** | ACTOR | — | Who last updated this record (Twenty built-in, system field) |
+| `dealId` | Custom | TEXT | — | Human-readable ID, e.g. `DEAL-2026-001` |
+| `currentStatusSummary` | Custom | TEXT | — | Narrative pipeline state: why at this stage, what's blocking next step |
+| `nextActionSummary` | Custom | TEXT | — | The single most important next action to move this deal forward |
+| `priority` | Custom | SELECT | `HIGH` / `MEDIUM` / `LOW` | Deal priority for this week's focus |
+| `healthCheck` | Custom | SELECT | `ON_TRACK` / `NEEDS_FOLLOW_UP` / `AWAITING_RESPONSE` / `AT_RISK` | Current deal health signal |
+| `probability` | Custom | NUMBER | — | Estimated close probability as a percentage (0–100) |
+| `nextFollowUpDate` | Custom | DATE_TIME | — | When to next reach out |
+| `lastUpdateDate` | Custom | DATE_TIME | — | Timestamp of the last meaningful update to this deal |
+| `riskIndicator` | Custom | SELECT | `LOW` / `MEDIUM` / `HIGH` | Manual risk flag — set when deal shows signs of stalling |
+| `weekReviewStatus` | Custom | SELECT | `REVIEWED` / `PENDING` / `NA` | Whether this deal was reviewed in the current weekly pipeline review |
+| `docLink` | Custom | LINKS | — | Link to proposal, contract draft, or supporting document |
 
 **Relations:**
 - `pointOfContact` → Contact (primary contact / decision maker, Twenty built-in)
@@ -141,18 +168,25 @@ Create via Settings → Data Model or via the metadata API.
 
 ### Task (standard object — extended)
 
-> **Purpose:** Internal action item. Extended with Leo agent-specific fields. The `agentAdvice` field is auto-populated by Leo based on task type and context — it contains prioritised guidance, talking points, and next steps.
+> **Purpose:** Internal action item (Twenty built-in object). Extended with Leo agent-specific fields. The `agentAdvice` field is auto-populated by Leo based on task type and context — it contains prioritised guidance, talking points, and next steps.
+>
+> **App column key:** `Standard` = built into Twenty, no creation needed — only rename if label differs. `Custom` = must be created via Settings → Data Model or metadata API.
 
-| Field | Type | Options | Description |
-|-------|------|---------|-------------|
-| `title` | TEXT *(auto)* | — | Concise action title, e.g. "Prepare quotation for Acme" (Twenty built-in) |
-| `status` | SELECT *(auto)* | `TODO` / `IN_PROGRESS` / `DONE` | Task status (Twenty built-in) |
-| `dueAt` | DATE_TIME *(auto)* | — | Task deadline (Twenty built-in) |
-| `assignee` | RELATION *(auto)* | — | Workspace member this task is assigned to (Twenty built-in) |
-| `taskId` | TEXT | — | Human-readable ID, e.g. `TASK-2026-001` |
-| `taskType` | SELECT | `PREPARE_QUOTATION` / `PREPARE_MOU` / `PREPARE_DEMO` / `FOLLOW_UP_CALL` / `PARTNER_ENABLEMENT` / `OTHER` | Task category — determines the type of agent advice Leo generates |
-| `agentAdvice` | TEXT | — | Leo's auto-generated guidance: pricing notes, objection handling, checklist, talking points. Editable by the task owner before execution. |
-| `outputLink` | LINKS | — | Link to the deliverable produced by this task (quotation PDF, deck, document) |
+| Field | App | Type | Options | Description |
+|-------|-----|------|---------|-------------|
+| `title` | **Standard** | TEXT | — | Concise action title, e.g. "Prepare quotation for Acme" (Twenty built-in primary field) |
+| `status` | **Standard** | SELECT | `TODO` / `IN_PROGRESS` / `DONE` | Task status (Twenty built-in) |
+| `dueAt` | **Standard** | DATE_TIME | — | Task deadline (Twenty built-in) |
+| `assignee` | **Standard** | RELATION | — | Workspace member this task is assigned to (Twenty built-in) |
+| `body` | **Standard** | RICH_TEXT | — | Task body / detail (Twenty built-in) |
+| `createdAt` | **Standard** | DATE_TIME | — | Record creation timestamp (Twenty built-in, system field) |
+| `updatedAt` | **Standard** | DATE_TIME | — | Last update timestamp (Twenty built-in, system field) |
+| `deletedAt` | **Standard** | DATE_TIME | — | Soft-delete timestamp (Twenty built-in, system field) |
+| `createdBy` | **Standard** | ACTOR | — | Who created this record (Twenty built-in, system field) |
+| `taskId` | Custom | TEXT | — | Human-readable ID, e.g. `TASK-2026-001` |
+| `taskType` | Custom | SELECT | `PREPARE_QUOTATION` / `PREPARE_MOU` / `PREPARE_DEMO` / `FOLLOW_UP_CALL` / `PARTNER_ENABLEMENT` / `OTHER` | Task category — determines the type of agent advice Leo generates |
+| `agentAdvice` | Custom | TEXT | — | Leo's auto-generated guidance: pricing notes, objection handling, checklist, talking points. Editable by the task owner before execution. |
+| `outputLink` | Custom | LINKS | — | Link to the deliverable produced by this task (quotation PDF, deck, document) |
 
 **Relations (Twenty built-in):**
 - `taskTargets → linked to any object (Account, Contact, Deal, Partnership, etc.) via Twenty's polymorphic task target system
