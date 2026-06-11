@@ -99,21 +99,21 @@ Create via Settings → Data Model or via the metadata API.
 | `name` | **Standard** | FULL_NAME | — | First + last name (Twenty built-in primary field) |
 | `emails` | **Standard** | EMAILS | — | Primary email + additional emails (Twenty built-in) |
 | `phones` | **Standard** | PHONES | — | Phone number(s) (Twenty built-in) |
-| `linkedinLink` | **Standard** | LINKS | — | LinkedIn profile URL (Twenty built-in) |
-| `jobTitle` | **Standard** | TEXT | — | Job title (Twenty built-in) |
-| `avatarUrl` | **Standard** | TEXT | — | Profile photo URL (Twenty built-in, system field) |
-| `city` | **Standard** | TEXT | — | City (Twenty built-in) |
-| `createdAt` | **Standard** | DATE_TIME | — | Record creation timestamp (Twenty built-in, system field) |
-| `updatedAt` | **Standard** | DATE_TIME | — | Last update timestamp (Twenty built-in, system field) |
-| `deletedAt` | **Standard** | DATE_TIME | — | Soft-delete timestamp (Twenty built-in, system field) |
-| `createdBy` | **Standard** | ACTOR | — | Who created this record (Twenty built-in, system field) |
-| `updatedBy` | **Standard** | ACTOR | — | Who last updated this record (Twenty built-in, system field) |
-| `whatsapp` | Custom | TEXT | — | WhatsApp number or handle |
+| `linkedinLink` | **Standard** *(label: "Linkedin")* | LINKS | — | LinkedIn profile URL (Twenty built-in) |
+| `jobTitle` | **Standard** *(label: "Job Title")* | TEXT | — | Job title (Twenty built-in) |
+| `avatar` | **Standard** *(label: "Avatar")* | TEXT | — | Profile photo URL (Twenty built-in) |
+| `avatarFile` | **Standard** *(label: "Avatar File")* | FILES | — | Profile photo file attachment (Twenty built-in) |
+| `createdAt` | **Standard** *(label: "Creation date")* | DATE_TIME | — | Record creation timestamp (Twenty built-in, system field) |
+| `updatedAt` | **Standard** *(label: "Last update")* | DATE_TIME | — | Last update timestamp (Twenty built-in, system field) |
+| `deletedAt` | **Standard** *(label: "Deleted at")* | DATE_TIME | — | Soft-delete timestamp (Twenty built-in, system field) |
+| `createdBy` | **Standard** *(label: "Created by")* | ACTOR | — | Who created this record (Twenty built-in, system field) |
+| `updatedBy` | **Standard** *(label: "Updated by")* | ACTOR | — | Who last updated this record (Twenty built-in, system field) |
+| `whatsapp` | Custom *(label: "WhatsApp")* | TEXT | — | WhatsApp number or handle |
 | `status` | Custom | SELECT | `HOT` / `WARM` / `COLD` / `INACTIVE` | Engagement temperature — updated based on interaction recency |
 | `country` | Custom | SELECT | `TAIWAN` / `HONG_KONG` / `CHINA` / `MALAYSIA` / `JAPAN` / `SINGAPORE` / `OTHER` | Country this contact is based in |
-| `decisionRole` | Custom | SELECT | `DECISION_MAKER` / `CHAMPION` / `INFLUENCER` / `END_USER` / `GATEKEEPER` | This person's role in the buying / partnership decision |
+| `decisionRole` | Custom *(label: "Decision Role")* | SELECT | `DECISION_MAKER` / `CHAMPION` / `INFLUENCER` / `END_USER` / `GATEKEEPER` | This person's role in the buying / partnership decision |
 | `source` | Custom | SELECT | `OUTBOUND_MAYA` / `INBOUND_WEB` / `REFERRAL` / `EVENT` / `PARTNER` | How we first connected with this person |
-| `lastContactDate` | Custom | DATE_TIME | — | Date of most recent interaction with this person |
+| `lastContactDate` | Custom *(label: "Last Contact Date")* | DATE_TIME | — | Date of most recent interaction with this person |
 | `notes` | Custom | TEXT | — | Personal context, preferences, background notes |
 
 **Relations:**
@@ -133,27 +133,28 @@ Create via Settings → Data Model or via the metadata API.
 
 | Field | App | Type | Options | Description |
 |-------|-----|------|---------|-------------|
-| `name` | **Standard** *(rename → "Deal Name")* | TEXT | — | Deal name, e.g. "GeoKernel - Acme Precision Q3 2026" (Twenty built-in primary field) |
+| `name` | **Standard** *(label: "Name")* | TEXT | — | Deal name, e.g. "GeoKernel - Acme Precision Q3 2026" (Twenty built-in primary field) |
 | `stage` | **Standard** | SELECT | `NEW` / `SCREENING` / `MEETING` / `PROPOSAL` / `CUSTOMER` / `WON` / `LOST` | Twenty built-in deal stage |
-| `amount` | **Standard** *(rename → "Expected Value")* | CURRENCY | — | Deal value (Twenty built-in as "Amount") |
-| `closeDate` | **Standard** *(rename → "Expected Close Date")* | DATE_TIME | — | Forecast close date (Twenty built-in as "Close date") |
-| `pointOfContact` | **Standard** | RELATION | — | Primary contact / decision maker (Twenty built-in) |
-| `createdAt` | **Standard** | DATE_TIME | — | Record creation timestamp (Twenty built-in, system field) |
-| `updatedAt` | **Standard** | DATE_TIME | — | Last update timestamp (Twenty built-in, system field) |
-| `deletedAt` | **Standard** | DATE_TIME | — | Soft-delete timestamp (Twenty built-in, system field) |
-| `createdBy` | **Standard** | ACTOR | — | Who created this record (Twenty built-in, system field) |
-| `updatedBy` | **Standard** | ACTOR | — | Who last updated this record (Twenty built-in, system field) |
-| `dealId` | Custom | TEXT | — | Human-readable ID, e.g. `DEAL-2026-001` |
-| `currentStatusSummary` | Custom | TEXT | — | Narrative pipeline state: why at this stage, what's blocking next step |
-| `nextActionSummary` | Custom | TEXT | — | The single most important next action to move this deal forward |
+| `amount` | **Standard** *(label: "Amount")* | CURRENCY | — | Deal value — Twenty built-in field. We use `expectedValue` (Custom) instead; this field may be hidden or left unused. |
+| `closeDate` | **Standard** *(label: "Close date")* | DATE_TIME | — | Forecast close date (Twenty built-in) |
+| `createdAt` | **Standard** *(label: "Creation date")* | DATE_TIME | — | Record creation timestamp (Twenty built-in, system field) |
+| `updatedAt` | **Standard** *(label: "Last update")* | DATE_TIME | — | Last update timestamp (Twenty built-in, system field) |
+| `deletedAt` | **Standard** *(label: "Deleted at")* | DATE_TIME | — | Soft-delete timestamp (Twenty built-in, system field) |
+| `createdBy` | **Standard** *(label: "Created by")* | ACTOR | — | Who created this record (Twenty built-in, system field) |
+| `updatedBy` | **Standard** *(label: "Updated by")* | ACTOR | — | Who last updated this record (Twenty built-in, system field) |
+| `dealId` | Custom *(label: "Deal ID")* | TEXT | — | Human-readable ID, e.g. `DEAL-2026-001` |
+| `currentStatusSummary` | Custom *(label: "Current Status Summary")* | TEXT | — | Narrative pipeline state: why at this stage, what's blocking next step |
+| `nextActionSummary` | Custom *(label: "Next Action Summary")* | TEXT | — | The single most important next action to move this deal forward |
 | `priority` | Custom | SELECT | `HIGH` / `MEDIUM` / `LOW` | Deal priority for this week's focus |
-| `healthCheck` | Custom | SELECT | `ON_TRACK` / `NEEDS_FOLLOW_UP` / `AWAITING_RESPONSE` / `AT_RISK` | Current deal health signal |
-| `probability` | Custom | NUMBER | — | Estimated close probability as a percentage (0–100) |
-| `nextFollowUpDate` | Custom | DATE_TIME | — | When to next reach out |
-| `lastUpdateDate` | Custom | DATE_TIME | — | Timestamp of the last meaningful update to this deal |
-| `riskIndicator` | Custom | SELECT | `LOW` / `MEDIUM` / `HIGH` | Manual risk flag — set when deal shows signs of stalling |
-| `weekReviewStatus` | Custom | SELECT | `REVIEWED` / `PENDING` / `NA` | Whether this deal was reviewed in the current weekly pipeline review |
-| `docLink` | Custom | LINKS | — | Link to proposal, contract draft, or supporting document |
+| `healthCheck` | Custom *(label: "Health Check")* | SELECT | `ON_TRACK` / `NEEDS_FOLLOW_UP` / `AWAITING_RESPONSE` / `AT_RISK` | Current deal health signal |
+| `probability` | Custom *(label: "Probability %")* | NUMBER | — | Estimated close probability as a percentage (0–100) |
+| `expectedValue` | Custom *(label: "Expected Value")* | CURRENCY | — | Our custom deal value field — use this instead of the Standard `amount` |
+| `nextFollowUpDate` | Custom *(label: "Next Follow-up Date")* | DATE_TIME | — | When to next reach out |
+| `lastUpdateDate` | Custom *(label: "Last Update Date")* | DATE_TIME | — | Timestamp of the last meaningful update to this deal |
+| `riskIndicator` | Custom *(label: "Risk Indicator")* | SELECT | `LOW` / `MEDIUM` / `HIGH` | Manual risk flag — set when deal shows signs of stalling |
+| `weekReviewStatus` | Custom *(label: "Week Review Status")* | SELECT | `REVIEWED` / `PENDING` / `NA` | Whether this deal was reviewed in the current weekly pipeline review |
+| `docLink` | Custom *(label: "Doc Link")* | LINKS | — | Link to proposal, contract draft, or supporting document |
+| ~~`businessLine`~~ | ~~Custom~~ | ~~SELECT~~ | — | ~~*Exists in Twenty instance but removed from schema — product-specific field, not universal. To be deleted from the object.*~~ |
 
 **Relations:**
 - `pointOfContact` → Contact (primary contact / decision maker, Twenty built-in)
