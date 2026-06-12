@@ -1,45 +1,48 @@
 ---
 name: deal-health-check
 description: >
-  Daily automated check of all active Opportunities. Detects opportunities that are stalled (no
-  engagement logged in 7+ days) or overdue on next action. Updates opportunity status to
-  AT_RISK where needed and creates follow-up tasks. Runs autonomously as a cron
-  trigger or can be called manually. Use when: cron triggers at 11:00 daily, or
-  user asks "opportunity 健檢", "哪些 opportunity 卡住了", "pipeline 有沒有 at risk".
+  Time-based daily scan of all active Opportunities. Detects opportunities that have gone
+  quiet — no engagement logged recently — and updates their healthCheck field accordingly.
+  Complements deal-progressing (which fires on each engagement logged). This skill is the
+  safety net; deal-progressing is the primary health updater. Runs autonomously as a cron
+  trigger or can be called manually. Use when: cron triggers at 11:00 daily, or user asks
+  "opportunity 健檢", "哪些 opportunity 卡住了", "pipeline 有沒有 at risk".
 triggers:
   - "opportunity health check"
   - "opportunity 健檢"
   - "哪些 opportunity 卡住了"
   - "pipeline 有沒有 at risk"
   - "AT_RISK opportunities"
-version: "1.2"
-author: Leo (BD Director Agent)
+version: "2.0"
+author: BD Lead Agent
 ---
 
 # Opportunity Health Check
 
 ## Purpose
-Scan all active Opportunities in Twenty CRM. For each opportunity, evaluate whether it is stalled
-or at risk based on recency of engagement and next-action status. Update opportunity status
-and create tasks where needed. This skill is the engine — the daily-briefing skill
-reads its output.
+Time-based daily scan of all active Opportunities. Complements deal-progressing (which fires on each engagement). This skill catches Opportunities that have gone quiet — no engagement logged recently — and updates their healthCheck accordingly. deal-progressing is the primary health updater; this skill is the safety net.
 
-## CRM Backend
-- Endpoint: `http://localhost:3001/api` (data) and `http://localhost:3001/metadata` (schema)
-- Auth: Bearer token from `/tmp/twenty_token.txt`
-- Always use localhost — never the external Cloudflare URL
+HealthCheck is the single source of truth. Both this skill and deal-progressing write to the same field.
 
-## Step 1 — Fetch All Active Opportunities
+## healthCheck values (unified with deal-progressing)
+- **ON_TRACK**: engaged within 7 days, no overdue tasks
+- **NEEDS_FOLLOWUP**: 7–14 days no engagement, or overdue tasks
+- **AT_RISK**: 14+ days no engagement
+- **AWAITING**: waiting for client response (set by deal-progressing, not by this skill)
 
-Query all opportunities where stage is NOT Closed Won or Closed Lost:
+## CRM Reference
+Twenty CRM: http://localhost:3001 (always localhost)
+GraphQL endpoint: http://localhost:3001/graphql
+
+## Step 1 — Fetch All Active Opportunities with Engagement History
+Query all non-closed opportunities, including their most recent completed engagement date:
 
 ```graphql
-query ActiveOpportunities {
+query ActiveOpportunitiesWithEngagement {
   opportunities(
     filter: {
       and: [
         { stage: { notIn: ["CLOSED_WON", "CLOSED_LOST"] } }
-        { dealStatus: { notEq: "CANCELLED" } }
       ]
     }
     first: 100
@@ -49,126 +52,149 @@ query ActiveOpportunities {
         id
         name
         stage
-        dealStatus
+        healthCheck
+        currentStatusSummary
         nextActionSummary
         lastUpdateDate
         updatedAt
+        closeDate
         amount { amountMicros currencyCode }
+        company { name }
         pointOfContact { edges { node { id name { firstName lastName } } } }
+        engagements(
+          filter: { engagementStatus: { eq: "COMPLETED" } }
+          orderBy: { engagementDate: DescNullsLast }
+          first: 1
+        ) {
+          edges { node { engagementDate engagementType outcome nextAction } }
+        }
+        taskOpportunities(
+          filter: { status: { notIn: ["DONE"] } }
+        ) {
+          edges { node { id title { text } dueAt taskPriority status } }
+        }
       }
     }
   }
 }
 ```
 
-## Step 2 — Evaluate Each Opportunity
+## Step 2 — Calculate Days Since Last Engagement
+For each opportunity:
+- `last_engagement_date` = most recent completed engagement date (from query)
+- If no engagement ever: use `createdAt` as baseline
+- `days_since_engagement` = (today − last_engagement_date).days
+- `overdue_tasks` = count(tasks where dueAt < today and status != DONE)
 
-For each opportunity, calculate days since last update:
-- Use `lastUpdateDate` if set; fall back to `updatedAt`
-- `lastUpdateDate` is a DATE string (YYYY-MM-DD); `updatedAt` is ISO datetime
+## Step 3 — Apply Time-Based Health Rules
+Only update healthCheck if the current value was set by this skill (time-based), NOT if it was set by deal-progressing after a recent engagement. The rule: if last_engagement_date is within the last 3 days, skip this opportunity — deal-progressing already has fresh data.
 
-Apply these rules:
+```
+if days_since_engagement <= 3:
+    skip — deal-progressing has fresh data, don't override
+elif days_since_engagement > 14:
+    new_healthCheck = AT_RISK
+elif days_since_engagement > 7 or overdue_tasks > 0:
+    new_healthCheck = NEEDS_FOLLOWUP
+else:
+    new_healthCheck = ON_TRACK
+```
 
-| Condition | Action |
-|-----------|--------|
-| Days since update > 7 AND `nextActionSummary` is empty | Mark `AT_RISK`, create task |
-| Days since update > 14 (any stage) | Mark `AT_RISK`, create task |
-| Stage = CUSTOMER and days > 21 | Mark `AT_RISK` + flag urgency HIGH |
-| Stage = PROPOSAL and days > 14 | Mark `AT_RISK` |
-| `nextActionSummary` is set and days < 7 | Healthy — no action |
+If current `healthCheck == AWAITING`: do not override. AWAITING is set by deal-progressing when human explicitly says client is reviewing/deciding.
 
-## Step 3 — Update Opportunity Status
-
-For opportunities flagged AT_RISK, update their `dealStatus` field:
+## Step 4 — Update healthCheck (only if changed)
+Only write to CRM if the healthCheck value is changing:
 
 ```graphql
-mutation UpdateOpportunityStatus($id: ID!, $status: String!) {
+mutation {
   updateOpportunity(
-    id: $id
-    data: { dealStatus: $status }
+    id: "{opportunity_id}"
+    data: {
+      healthCheck: "{new_healthCheck}"
+      currentStatusSummary: "{stage} stage. No engagement for {N} days. {last_outcome_if_known}"
+      nextActionSummary: "{appropriate_next_action}"
+      lastUpdateDate: "{today_iso}"
+    }
   ) {
     id
-    dealStatus
+    healthCheck
+    currentStatusSummary
   }
 }
 ```
 
-Status values: `HEALTHY` / `AT_RISK` / `NEEDS_FOLLOWUP` / `CANCELLED`
+**nextActionSummary logic:**
+- **AT_RISK**: `"Re-engage immediately — {N} days of silence. Last interaction: {date}."`
+- **NEEDS_FOLLOWUP**: `"Follow up on: {last nextAction from engagement if known, else 'check in on status'}"`
+- **ON_TRACK**: keep existing nextActionSummary if set, otherwise `"Continue progression."`
 
-## Step 4 — Create Follow-up Tasks (dedup)
-
-Before creating a task, check if an open task already exists for this opportunity within the last 7 days (to avoid duplicates):
+## Step 5 — Create Stall Task (if AT_RISK and no recent stall task)
+Before creating, check if a stall task already exists (open, created in last 7 days):
 
 ```graphql
-query ExistingTasks($opportunityId: ID!) {
+query {
   tasks(
     filter: {
       and: [
-        { opportunity: { id: { eq: $opportunityId } } }
-        { status: { notEq: "DONE" } }
-        { dueAt: { gte: "7_DAYS_AGO_ISO" } }
+        { taskTargets: { opportunity: { id: { eq: "{opportunity_id}" } } } }
+        { status: { notIn: ["DONE"] } }
+        { title: { like: "%[STALL]%" } }
       ]
     }
   ) {
-    edges { node { id title } }
+    edges { node { id } }
   }
 }
 ```
 
-If no existing open task, create one:
+If no existing stall task:
 
 ```graphql
-mutation CreateTask($opportunityId: ID!, $title: String!, $due: DateTime!) {
-  createTask(
-    data: {
-      title: $title
-      status: "TODO"
-      dueAt: $due
-      taskPriority: "HIGH"
-      opportunity: { id: $opportunityId }
-    }
-  ) {
-    id
-    title
-  }
+mutation {
+  createTask(data: {
+    title: { text: "[STALL] {company_name} — {N} days no engagement" }
+    status: "TODO"
+    dueAt: "{tomorrow_iso}"
+    taskPriority: "URGENT"
+    agentAdvice: "Opportunity has gone quiet for {N} days. Last engagement: {date, type}. Options: (1) re-engage with a specific question about {last topic}, (2) escalate to [Sales Rep], (3) assess if opportunity should be marked lost."
+  }) { id }
 }
 ```
 
-Task title format: `"[Opportunity Health] {opportunity name} — 超過 {N} 天無更新，請跟進"`
-Due date: today + 1 day
+Then link to opportunity via taskTargets.
 
-## Step 5 — Output Summary
-
-Return a structured summary (used by daily-briefing):
+## Step 6 — Output Summary
+Return structured output for daily-briefing to consume:
 
 ```
-## Opportunity Health Check — {DATE}
+## Opportunity Health Scan — {DATE}
 
-Total active opportunities: N
-Healthy: N
-At risk: N
+Scanned: {N} active opportunities
+Skipped (fresh engagement ≤3 days): {N}
+Updated: {N}
 
-### 🔴 AT_RISK Opportunities
-| Opportunity | Stage | Days since update | Next Action | Task created |
-|------|-------|-------------------|-------------|-------------|
-| ... |
+### 🔴 AT_RISK ({n})
+| Opportunity | Company | Stage | Days silent | Last engagement | Next action |
+|---|---|---|---|---|---|
+| {name} | {company} | {stage} | {N}d | {date, type} | {nextActionSummary} |
 
-### ✅ Healthy Opportunities
-(list opportunity names only — no table needed)
+### 🟡 NEEDS_FOLLOWUP ({n})
+| Opportunity | Company | Stage | Days silent | Next action |
+|---|---|---|---|---|
+
+### ✅ ON_TRACK ({n})
+(names only)
 ```
 
-## Mode A — Manual (single opportunity)
-User provides an opportunity name or ID → check only that opportunity, return detailed status.
-
-## Mode B — Full scan (cron)
-No input → scan all active opportunities, apply rules, update statuses, create tasks.
-Silent if all opportunities are healthy (no output).
-Only output/deliver if AT_RISK opportunities were found.
+**Mode B (cron):** Silent if all opportunities are ON_TRACK and no updates were made.
+**Mode A (manual, single opportunity):** Always return full detail regardless.
 
 ## Pitfalls
-- `amount.amountMicros` ÷ 1,000,000 = USD value
-- `lastUpdateDate` may be null — always fall back to `updatedAt`
-- Don't create duplicate tasks — always check first with ExistingTasks query
-- **Stage field confirmed values:** `NEW`, `SCREENING`, `MEETING`, `PROPOSAL`, `CUSTOMER` — NOT `NEW_LEAD`, `MEETING_SCHEDULED`, etc. The UPPER_SNAKE variants return a schema error.
-- **dealStatus SELECT options (confirmed):** `HEALTHY`, `AT_RISK`, `NEEDS_FOLLOWUP`, `CANCELLED`
-- Always localhost — never external URL
+1. Always use localhost — never external URL
+2. Do NOT use `dealStatus` field — `healthCheck` is the single source of truth
+3. Do NOT override AWAITING — that status is set by deal-progressing when human reports client is deciding
+4. Do NOT override if last engagement ≤ 3 days — deal-progressing has fresh data
+5. Always dedup stall tasks — check before creating
+6. `lastUpdateDate` may be null — fall back to `updatedAt`, then `createdAt`
+7. Stage confirmed values: `NEW`, `SCREENING`, `MEETING`, `PROPOSAL`, `CUSTOMER`
+8. `engagementNote` is RICH_TEXT — extract plain text from `.json`

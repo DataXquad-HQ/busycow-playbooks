@@ -2,13 +2,13 @@
 name: daily-briefing
 description: >
   Generate and deliver the daily action briefing for the BD team. Pulls AT_RISK
-  deals and today's due tasks from Twenty CRM, organises by priority, sends to
+  opportunities and today's due tasks from Twenty CRM, organises by priority, sends to
   Feishu. Runs automatically at 08:00 Taiwan time via cron, or on-demand.
 triggers:
   - "daily briefing"
   - "今天有什麼要做"
   - "morning briefing"
-version: "3.0"
+version: "3.1"
 author: Leo (BD Director Agent)
 ---
 
@@ -16,9 +16,9 @@ author: Leo (BD Director Agent)
 
 ## Purpose
 
-Every morning at 08:00 Taiwan time: read overnight diagnostics from Twenty CRM, pull today's due tasks, format into a clean briefing, and send to Feishu.
+Every morning at 08:00 Taiwan time: read overnight diagnostics from Twenty CRM, pull AT_RISK opportunities and today's due tasks, format into a clean briefing, and send to Feishu.
 
-No computation — just reads already-processed data and formats it.
+No computation — just reads already-processed data and formats it. Reads from the `healthCheck` field (written by `deal-progressing` and `deal-health-check`) — not `dealStatus`.
 
 ---
 
@@ -31,7 +31,7 @@ No computation — just reads already-processed data and formats it.
 
 ## Data Pull (parallel)
 
-### 1. AT_RISK Deals
+### 1. AT_RISK Opportunities
 
 ```graphql
 query {
@@ -49,7 +49,9 @@ query {
       node {
         id name stage
         lastUpdateDate
+        currentStatusSummary
         nextActionSummary
+        healthCheck
         company { name }
         owner { name { firstName lastName } }
       }
@@ -58,9 +60,9 @@ query {
 }
 ```
 
-### 2. NEEDS_FOLLOWUP Deals (secondary tier)
+### 2. NEEDS_FOLLOWUP Opportunities (secondary tier)
 
-Same query, replace `AT_RISK` with `NEEDS_FOLLOWUP`.
+Same query, replace `AT_RISK` with `NEEDS_FOLLOWUP`, and include `currentStatusSummary` and `nextActionSummary` fields.
 
 ### 3. Today's Due Tasks
 
@@ -94,8 +96,8 @@ query {
 ## Algorithm
 
 ```
-1. Fetch AT_RISK deals + NEEDS_FOLLOWUP deals + today's tasks (parallel)
-2. Sort deals by lastUpdateDate ascending (oldest = most urgent)
+1. Fetch AT_RISK opportunities + NEEDS_FOLLOWUP opportunities + today's tasks (parallel)
+2. Sort opportunities by lastUpdateDate ascending (oldest = most urgent)
 3. Sort tasks by taskPriority (HIGH first)
 4. Format briefing
 5. Send to Feishu origin chat
@@ -108,22 +110,24 @@ query {
 ```
 🎯 Daily Briefing — {YYYY-MM-DD}
 
-⚠️ AT RISK Deals
-• {Company} ({Deal Name}) — {N}d no update — {nextActionSummary}
+🔴 AT RISK ({n})
+• {Company} — {Opportunity Name}
+  └ {currentStatusSummary}
+  └ Next: {nextActionSummary}
 • ...
-[if none: No deals at risk. ✅]
+[if none: No opportunities at risk ✅]
 
-📋 Needs Follow-up
-• {Company} ({Deal Name}) — {nextActionSummary}
+🟡 Needs Follow-up ({n})
+• {Company} — {Opportunity Name} — {nextActionSummary}
 [if none: omit section]
 
-✅ Tasks Due Today
-• {Task title} @{Assignee}
+✅ Tasks Due Today ({n})
+• [{priority}] {Task title}
 • ...
-[if none: No tasks due today.]
+[if none: No tasks due today]
 
 ---
-08:00 · Leo BD Agent
+{TIME} · Leo
 ```
 
 ---
@@ -132,7 +136,7 @@ query {
 
 - **Cron:** Deliver to origin Feishu chat (`deliver: "origin"`)
 - **Manual:** Reply in conversation
-- **If nothing to report:** Still send — "No deals at risk. No tasks due today. ✅" — confirms the briefing ran.
+- **If nothing to report:** Still send — "No opportunities at risk. No tasks due today. ✅" — confirms the briefing ran.
 
 ---
 
@@ -154,6 +158,8 @@ query {
 
 4. **`title` is RICH_TEXT on tasks** — extract `.text` from the object.
 
-5. **Don't send empty briefing silently** — even if no AT_RISK deals and no tasks, send a confirmation message so the team knows the briefing ran.
+5. **Don't send empty briefing silently** — even if no AT_RISK opportunities and no tasks, send a confirmation message so the team knows the briefing ran.
 
 6. **`taskPriority` options** — `HIGH` / `MEDIUM` / `LOW` (our custom field, not Twenty's built-in status).
+
+7. **Read `healthCheck` field — not `dealStatus` — for opportunity health status.**

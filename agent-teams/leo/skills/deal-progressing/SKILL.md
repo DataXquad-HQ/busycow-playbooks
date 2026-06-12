@@ -6,11 +6,11 @@ description: >
   updates the Opportunity record. Triggered automatically by engagement-logging,
   or manually when user asks about opportunity status.
 triggers:
-  - "deal status"
-  - "deal health"
-  - "update deal"
-  - "deal progress"
-version: "3.1"
+  - "opportunity progressing"
+  - "opportunity status"
+  - "update opportunity"
+  - "opportunity health"
+version: "3.2"
 author: Leo (BD Director Agent)
 ---
 
@@ -19,6 +19,8 @@ author: Leo (BD Director Agent)
 ## Purpose
 
 After every Engagement is logged, re-evaluate the opportunity and update the Opportunity record in Twenty CRM with a fresh health assessment.
+
+This skill is the PRIMARY health updater — it fires immediately after every engagement is logged. `deal-health-check` is the secondary time-based safety net that runs daily for Opportunities that have gone quiet with no engagement.
 
 ---
 
@@ -205,14 +207,22 @@ If `healthCheck == AT_RISK`, auto-create a re-engagement task:
 
 ```graphql
 mutation {
-  createTask(input: {
-    task: {
-      title: { text: "[STALL] {company_name} — {days} days no activity" }
-      status: "TODO"
-      dueAt: "{tomorrow_iso}"
-      taskPriority: "HIGH"
-      agentAdvice: "Opportunity has gone quiet for {days} days. Review last engagement notes and choose: (1) re-engage with a specific question, (2) escalate to [Sales Rep], (3) mark as lost."
-    }
+  createTask(data: {
+    title: { text: "[STALL] {company_name} — {days} days no activity" }
+    status: "TODO"
+    dueAt: "{tomorrow_iso}"
+    taskPriority: "URGENT"
+    agentAdvice: "Opportunity has gone quiet for {days} days. Review last engagement notes and choose: (1) re-engage with a specific question, (2) escalate to [Sales Rep], (3) mark as lost."
+  }) { id }
+}
+```
+
+Then link the task to the opportunity via `taskTargets`:
+
+```graphql
+mutation {
+  updateTask(id: "{task_id}", data: {
+    taskTargets: { connect: { opportunityId: "{opportunity_id}" } }
   }) { id }
 }
 ```
