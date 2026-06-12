@@ -16,7 +16,7 @@ triggers:
   - "這是會議記錄"
   - "貼一下對話"
   - "這是對話記錄"
-version: "4.0"
+version: "4.1"
 author: Leo (BD Director Agent)
 ---
 
@@ -136,26 +136,31 @@ Wait for the human's response. If they say OK, proceed. If they correct or add, 
 
 ---
 
-### Step 4: Confirm Next Step — MANDATORY
+### Step 4: Confirm Next Step (nextAction) — MANDATORY
 
-**Every engagement must end with a next step.** This is non-negotiable.
+`nextAction` 是一句話的方向性摘要，不是任務清單。
 
-After summary/outcome is confirmed, always ask:
+格式：**"{Owner}: {action} by {deadline}"**
+範例：
+- "Hunter: send proposal to David by Friday"
+- "客戶方 (Sarah): confirm internal budget by 2026-06-20"
+- "Leo: prepare follow-up email today"
+
+Summary/outcome 確認後，問：
 
 ```
-還有一件事——這次之後的下一步是什麼？
+還有一件事——這次之後的下一步方向是什麼？
 
 我初步判斷是：{inferred_next_step_from_input_if_any}
 
-但請確認：
-- **做什麼？** {action}
-- **誰負責？** {owner — Hunter / Leo / 客戶方}
-- **什麼時候？** {deadline or timeframe}
+誰負責、做什麼、什麼時候？
 ```
 
-If a next step was already mentioned in the input, pre-fill your best guess and ask for confirmation. Do not skip this step even if the input seems complete.
+從輸入裡預填，請人類確認。一句話就好。
 
-If the human says "沒有下一步" or "先等等"— accept it, but note it explicitly in the engagement record as: "No next action defined at this time."
+如果人類說「沒有下一步」或「先等等」——接受，在 engagement 裡記錄："No next action defined at this time."
+
+**注意：** `nextAction` 只是方向性摘要。真正的工作項目（準備文件、研究、draft 等）由 Step 7 的 `task-management` 處理。
 
 ---
 
@@ -222,37 +227,27 @@ Update each completed task to `DONE`.
 
 ---
 
-### Step 7: Create Next-Step Task
+### Step 7: Identify and Create Tasks → `task-management`
 
-If a next step was confirmed with owner + deadline, create a Task:
+Engagement 寫入 CRM 後，呼叫 `task-management` skill，傳入：
+- 完整 engagement 內容（summary、outcome、notes、confirmed nextAction）
+- `opportunity_id` 或 `partnership_id`
+- 當前 deal health（若已知）
 
-```graphql
-mutation {
-  createTask(data: {
-    title: { text: "{action}" }
-    status: "TODO"
-    dueAt: "{deadline_iso}"
-    taskPriority: "MEDIUM"
-    agentAdvice: "{leo_advice — context from this engagement, what to watch for, suggested approach}"
-  }) { id }
-}
-```
+`task-management` 負責：
+1. 掃描 engagement 內容，識別**所有需要執行的工作項目**
+2. 檢查是否有重複/未完成的 task 已存在
+3. 建立 Task 記錄（title、due date、priority、agentAdvice）
+4. 將 engagement 中提到已完成的任務標為 DONE
+5. 回傳已建任務清單，供 Step 10 確認訊息使用
 
-Link to opportunity or partnership:
-```graphql
-mutation {
-  updateTask(id: "{task_id}", data: {
-    taskTargets: {
-      connect: { opportunityId: "{opportunity_id}" }
-    }
-  }) { id }
-}
-```
+**`nextAction` ≠ Task**——nextAction 是方向性摘要（一句話），Task 是具體工作項目。兩者都要填，但分開處理。
 
-`agentAdvice` should include:
-- Why this next step matters in the context of the deal
-- Any signals from this engagement worth noting (positive or risk)
-- Suggested approach or talking points
+常見例子：
+- "需要準備報價" → Task: "Prepare quotation for {company} — {product}"
+- "要研究他們的技術架構" → Task: "Research {company} tech stack before next meeting"
+- "要跟 Kevin 確認定價" → Task: "Align with Kevin on pricing for {company}"
+- "他們想看 demo" → Task: "Prepare demo for {company}"
 
 ---
 
@@ -289,12 +284,21 @@ mcp_gbrain_extract_facts(
 ```
 ✅ 已記錄：
 
-{company_name} — {engagement_type} on {date}
+**{company_name}** — {engagement_type} on {date}
 Outcome: {outcome_summary}
-Next Step: {owner} — {action} by {deadline}
+Next Step: {nextAction}
 
 Twenty CRM ✅ | GBrain ✅
+
+{if tasks created:}
+📋 已建立 {N} 個任務：
+1. [{priority}] {title} — due {date}
+   → {one-line agent advice}
+2. [{priority}] {title} — due {date}
+   → {one-line agent advice}
 ```
+
+If zero tasks were identified, omit the task section entirely.
 
 ---
 
