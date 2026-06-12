@@ -8,7 +8,7 @@
 >
 > See `skills/README.md` for the full customisation checklist before installing.
 
-**Version:** 4.0 | **Last Updated:** 2026-06-12
+**Version:** 4.1 | **Last Updated:** 2026-06-12
 
 ---
 
@@ -230,23 +230,19 @@ Sales rep tells Leo about someone they met (event, intro, inbound, referral). Le
 
 ---
 
-### C6 — Maintaining Partner Success
+### C6 — Partner Success *(out of scope for Leo)*
 
-> **Attention the sales rep buys back:** No need to track how much each signed partner is contributing or notice when one is declining.
+> **This capability belongs to a dedicated Partner Success Agent — not Leo.**
 
-**Outcome:** Signed partners stay active and contributing — declining partner relationships are caught early before they fully lapse.
+Leo's boundary ends at **Partnership signed**. Once a partner reaches `SIGNED` status, Leo's job is to notify the Partner Success Agent and hand off. What happens after that — enablement, joint go-to-market, revenue tracking, health monitoring — is a different discipline with a different north star.
 
-**Leo owns:** Monthly check on all active (signed) partners — reviewing revenue trend and engagement recency. Alerting only when red flags appear: 3+ months at $0 revenue, partner goes from active to silent, or partner requests help but cannot execute.
+**Why a separate agent:**
+- Leo's north star is **progression** (push people toward a decision). Partner Success's north star is **retention and amplification** (keep signed partners producing). These are fundamentally different operating modes.
+- Partner Success scope grows over time — training, enablement materials, joint campaigns, revenue attribution. Absorbing this into Leo would cause focus drift.
 
-**Trigger:** Monthly automatic / on-demand
-**Boundary:** Leo flags and recommends. Human decides whether to call, renegotiate, or offboard.
+**Leo's handoff trigger:** When a Partnership record moves to `SIGNED` → Leo creates a handoff task and notifies the Partner Success Agent.
 
-| **Trigger** | **Execution** | **Quality** |
-|-|-|-|
-| ⚠️ Monthly cron not yet built | ⚠️ Scorecard skill does not exist yet | ⚠️ Partner revenue data requires manual invoice check — cannot auto-calculate |
-
-**Skills** *(building blocks):* *(pending)* `partner-monthly-scorecard`
-**Cron:** → *(pending)* `partner-success-monthly` (1st of month, 09:00)
+**Partner Success Agent:** *Pending — agent not yet defined. To be designed as a separate profile.*
 
 ---
 
@@ -259,9 +255,11 @@ Sales rep tells Leo about someone they met (event, intro, inbound, referral). Le
 | C3 Progressing Opportunities to Close | MoFu → BoFu | ⚠️ / ✅ | ✅ | ⚠️ |
 | C4 Progressing Partnerships to Agreement | MoFu → BoFu | ✅ / ⚠️ | ✅ | ⚠️ |
 | C5 Monitoring Pipeline Health | Cross-funnel | ⚠️ / ✅ | ⚠️ | ⚠️ |
-| C6 Maintaining Partner Success | Post-BoFu | ⚠️ | ⚠️ | ⚠️ |
+| C6 Partner Success | Post-BoFu | — | — | — |
 
-**Pending skills:** `lead-list-triage` (C1) · `mql-outreach` (C2) · `weekly-pipeline-review` (C5) · `partner-monthly-scorecard` (C6) · `outreach-sequence-check` cron (C2)
+**C6 note:** Partner Success is out of Leo's scope. Handed off to a dedicated Partner Success Agent (pending design).
+
+**Pending skills:** `lead-list-triage` (C1) · `mql-outreach` (C2) · `weekly-pipeline-review` (C5) · `outreach-sequence-check` cron (C2)
 
 ---
 
