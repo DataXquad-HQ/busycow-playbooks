@@ -214,10 +214,13 @@ When [Sales Rep] mentions someone they met (event, introduction, referral), Leo:
 - No autonomous trigger — Leo waits for [Sales Rep] to initiate
 
 **Authority:**
-- Triage assessment: ✅ Autonomous
-- Onboarding into CRM: ✅ Autonomous
-- Final triage decision (batch): ⚠️ [Sales Rep] confirms selections
-- Single contacts: initiated by [Sales Rep]
+
+| Action | Authority | Notes |
+|-|-|-|
+| Triage assessment | ✅ Autonomous | |
+| Onboarding into CRM | ✅ Autonomous | |
+| Final triage decision (batch) | ⚠️ Confirmation | [Sales Rep] confirms selections |
+| Single contact initiation | ⚠️ Human-initiated | [Sales Rep] brings them in |
 
 **Skills:** `account-onboarding` · `capturing-sales-intel` · `lead-list-triage`
 
@@ -249,9 +252,12 @@ Enrichment for every Company that enters CRM, calibrated by how the lead arrived
 - **Monthly** — re-enriches all `COLD` / `OUTREACH` / `WARM` / `HOT` companies on the 1st of the month. Skips `OPT_OUT`.
 
 **Authority:**
-- Web research and CRM enrichment: ✅ Autonomous
-- GBrain sync: ✅ Autonomous
-- Internal buying signals and decision-maker mapping: ⚠️ Comes from [Sales Rep]
+
+| Action | Authority | Notes |
+|-|-|-|
+| Web research and CRM enrichment | ✅ Autonomous | |
+| GBrain sync | ✅ Autonomous | |
+| Internal buying signals / decision-maker mapping | ⚠️ Human-provided | Comes from [Sales Rep] |
 
 **Skills:** `enriching-leads` · `capturing-sales-intel`
 **Cron:** `account-enrichment-monthly` — 1st of month, 20:00 UTC
@@ -305,10 +311,13 @@ Leo drafts → Leo presents to [Sales Rep] → [Sales Rep] confirms → Leo send
 - Flow C: Daily inbox scan cron (09:00 UTC)
 
 **Authority:**
-- Drafting outreach emails: ✅ Autonomous
-- Sending after confirmation: ✅ Autonomous (post-approval)
-- Sending without confirmation: 🚫 Never
-- CRM status update (WARM / OPT_OUT): ⚠️ After [Sales Rep] confirms
+
+| Action | Authority | Notes |
+|-|-|-|
+| Drafting outreach emails | ✅ Autonomous | |
+| Sending after confirmation | ✅ Autonomous | Post-approval only |
+| Sending without confirmation | 🚫 Never | |
+| CRM status update (WARM / OPT_OUT) | ⚠️ Confirmation | After [Sales Rep] confirms |
 
 **Skills:** `mql-outreach` · `lead-nurturing` · `follow-up-email` · `openmail` · `inbox-monitor`
 **Crons:** `outreach-sequence-check` (daily 10:00 UTC) · `lead-nurturing-monthly` (1st of month, 09:00 UTC) · `inbox-monitor` (daily 09:00 UTC)
@@ -345,12 +354,15 @@ Automatic detection:
 - Planned Engagement tomorrow — detected daily at 09:00 UTC
 
 **Authority:**
-- Logging engagements and updating CRM: ✅ Autonomous (after confirmation)
-- Creating Tasks: ✅ Autonomous
-- Stall detection and flagging: ✅ Autonomous
-- Meeting brief generation: ✅ Autonomous
-- Deciding whether to continue pursuing an Opportunity: 🚫 [Sales Rep]
-- Quotation and invoice documents: ⚠️ Draft autonomous · [Sales Rep] approves before send
+
+| Action | Authority | Notes |
+|-|-|-|
+| Logging engagements and updating CRM | ✅ Autonomous | After [Sales Rep] confirms extracted content |
+| Creating Tasks | ✅ Autonomous | |
+| Stall detection and flagging | ✅ Autonomous | |
+| Meeting brief generation | ✅ Autonomous | |
+| Deciding whether to continue an Opportunity | 🚫 Human Decision | [Sales Rep] only |
+| Quotation and invoice documents | ⚠️ Draft autonomous | [Sales Rep] approves before send |
 
 **Skills:** `engagement-logging` · `task-management` · `deal-progressing` · `deal-health-check` · `meeting-prep` · `deal-advisory` · `follow-up-email` · `generating-quotations` · `generating-invoices`
 **Crons:** `daily-deal-health-check` (daily 03:00 UTC) · `meeting-prep-daily` (daily 09:00 UTC)
@@ -377,11 +389,14 @@ Leo's boundary ends at **Signed**. Enablement, joint go-to-market, and revenue t
 - Partnership quiet 14+ days — detected daily at 03:00 UTC
 
 **Authority:**
-- Logging interactions and updating CRM: ✅ Autonomous (after confirmation)
-- Creating Tasks: ✅ Autonomous
-- Silence detection and flagging: ✅ Autonomous
-- Contract terms: 🚫 Human Decision — sign-off required
-- Pricing exceptions: 🚫 Human Decision — approval required
+
+| Action | Authority | Notes |
+|-|-|-|
+| Logging interactions and updating CRM | ✅ Autonomous | After [Sales Rep] confirms extracted content |
+| Creating Tasks | ✅ Autonomous | |
+| Silence detection and flagging | ✅ Autonomous | |
+| Contract terms | 🚫 Human Decision | Sign-off required |
+| Pricing exceptions | 🚫 Human Decision | Approval required |
 
 **Skills:** `managing-partnership-pipeline` · `engagement-logging` · `task-management` · `meeting-prep`
 **Crons:** `daily-partnership-health-check` (daily 03:00 UTC) · `meeting-prep-daily` (daily 09:00 UTC, shared with C4)
@@ -424,9 +439,12 @@ A strategic picture. All Opportunities and Partnerships grouped by `healthCheck`
 - Either can be triggered on demand at any time
 
 **Authority:**
-- Generating and delivering briefings: ✅ Autonomous
-- Revenue forecasting: 🚫 Out of scope
-- Product or strategic decisions: 🚫 Out of scope
+
+| Action | Authority | Notes |
+|-|-|-|
+| Generating and delivering briefings | ✅ Autonomous | |
+| Revenue forecasting | 🚫 Out of scope | |
+| Product or strategic decisions | 🚫 Out of scope | |
 
 **Skills:** `daily-briefing` · `weekly-pipeline-review` · `reviewing-sales-pipeline` · `reviewing-partnership-pipeline`
 **Crons:** `daily-briefing` (daily 00:00 UTC) · `weekly-pipeline-review` (Friday 09:00 UTC)
@@ -437,41 +455,7 @@ A strategic picture. All Opportunities and Partnerships grouped by `healthCheck`
 
 ---
 
-## Section 4 — Authority Grid
-
-| Action | Leo Can | Notes |
-|-|-|-|
-| Prospect list triage and segmentation | ✅ Autonomous | [Sales Rep] confirms final selection |
-| Company + Person onboarding into CRM | ✅ Autonomous | Batch or single |
-| Cold email drafting | ✅ Autonomous | [Sales Rep] confirms before Leo sends |
-| Sending via OpenMail after confirmation | ✅ Sends post-approval | Never auto-sends |
-| Account enrichment | ✅ Autonomous | Depth calibrated to intent level |
-| Engagement and pipeline logging | ✅ Autonomous | After [Sales Rep] confirms extracted content |
-| Task identification and creation | ✅ Autonomous | From engagement content |
-| Meeting brief generation | ✅ Autonomous | Runs night before scheduled meetings |
-| Quotation and proposal drafting | ✅ Draft autonomous | [Sales Rep] approves before send |
-| Partner progression tasks and follow-up | ✅ Autonomous | Same flow as Opportunity progression |
-| New partner contract terms | 🚫 Human Decision | Sign-off required |
-| Pricing outside approved tiers | 🚫 Human Decision | Approval required |
-| Any outbound official document | ⚠️ Confirmation Zone | Draft ready · human confirms before send |
-
----
-
-## Section 5 — Tools
-
-| Tool | Purpose | Used By |
-|---|---|---|
-| Twenty CRM (`localhost:3001`) | Source of truth — Companies, People, Opportunities, Partnerships, Engagements, Tasks | All |
-| GBrain | Long-term narrative memory — company history, deal arc, relationship depth | C2, C4, C5 |
-| Web Search (Tavily) | Company research, list triage, account enrichment | C1, C2 |
-| OpenMail (`leo-dx@openmail.sh`) | Outbound email sending + inbound reply monitoring | C3 |
-| Lark IM | Delivering briefings, drafts, and alerts to [Sales Rep] | All |
-| Lark Docs / Drive | Quotation and proposal document generation and storage | C4 |
-| Hermes Cron | Scheduling and running all automated jobs | All |
-
----
-
-## Section 6 — Design Principles
+## Section 4 — Design Principles
 
 **Owning the Full Outbound Motion**
 Leo handles everything from finding a lead to closing the deal. C1 brings people in, C2 builds context, C3 warms them up, C4 and C5 drive to close, C6 monitors everything. The sales rep focuses on judgment calls and relationship moments — not process.
