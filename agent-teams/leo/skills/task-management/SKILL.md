@@ -83,7 +83,7 @@ Before creating, fill in:
 
 | Field | How to determine |
 |---|---|
-| **Title** | Clear, action-oriented: verb + object + context. E.g. "Prepare quotation for ABC Corp — GeoKernel Standard" |
+| **Title** | Clear, action-oriented: verb + object + context. E.g. "Prepare quotation for ABC Corp — [Product] Standard" |
 | **Owner** | Who is responsible? Hunter / Leo / Kevin / client-side person. Infer from engagement content. If unclear, default to Hunter and note it. |
 | **Due date** | Any deadline mentioned? If not explicit, infer from deal urgency: AT_RISK → tomorrow, NEEDS_FOLLOWUP → 3 days, ON_TRACK → 7 days |
 | **Priority** | URGENT if committed to client or deal is AT_RISK; HIGH if directly blocking deal progression; MEDIUM for preparation tasks; LOW for monitoring tasks |

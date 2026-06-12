@@ -79,7 +79,7 @@ Extract:
 - **Official website** — confirm or fill in
 - **Key contact email** — general contact if findable
 - **Notable clients or projects** — if publicly mentioned
-- **Any GeoKernel / BusyCow / Distify / AquaOptima fit signals** — does what they do align with any of our products?
+- **Any product fit signals** — does what they do align with any of our products?
 
 ### Industry Options (Twenty)
 | Option | Use For |
@@ -140,7 +140,7 @@ Note body should include:
 - Company description
 - Size / headcount estimate
 - Key clients or use cases (if found)
-- Product fit signals (which GeoKernel/BusyCow/Distify/AquaOptima products might fit)
+- Product fit signals (which of your products might fit this company's needs)
 - Source of information (web search, LinkedIn, etc.)
 - Date enriched
 
