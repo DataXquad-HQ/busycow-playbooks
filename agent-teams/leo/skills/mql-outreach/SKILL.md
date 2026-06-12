@@ -248,6 +248,49 @@ Approve all / review one by one?
 
 ---
 
+### Step 4a: Human Confirmation & Send via OpenMail
+
+After presenting the draft, **wait for explicit human confirmation** before sending.
+
+Accepted confirmations: "send", "yes", "ok", "確認發送", "寄出", or approving a specific contact by name.
+
+Do NOT send if human says "edit", "skip", "hold", or does not respond.
+
+**Once confirmed, send via OpenMail API:**
+
+```bash
+OPENMAIL_API_KEY=$(cat ~/.hermes/profiles/leo/secrets/openmail_api_key)
+OPENMAIL_INBOX_ID="0527f34e-65ad-4a02-adbc-e7872a9a921e"
+IDEMPOTENCY_KEY=$(python3 -c "import uuid; print(uuid.uuid4())")
+
+curl -s -X POST "https://api.openmail.sh/v1/inboxes/${OPENMAIL_INBOX_ID}/send" \
+  -H "Authorization: Bearer ${OPENMAIL_API_KEY}" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: ${IDEMPOTENCY_KEY}" \
+  -d '{
+    "to": "{recipient_email}",
+    "subject": "{subject}",
+    "body": "{html_body}"
+  }'
+```
+
+On success response (`"status": "sent"`), capture:
+- `messageId` — store for reference
+- `threadId` — store on the CRM engagement record for future replies
+
+**Report back to human:**
+```
+✅ Sent to {Name} <{email}>
+messageId: {id}
+threadId: {id}
+
+Logging to CRM...
+```
+
+If API returns error: report the error, do NOT update CRM, ask human how to proceed.
+
+---
+
 ### Step 5: After Send — Update CRM
 
 After sales rep confirms send:

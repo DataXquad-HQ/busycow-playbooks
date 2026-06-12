@@ -192,6 +192,50 @@ Review one by one, or approve all for sending?
 
 ---
 
+### Step 4a: Human Confirmation & Send via OpenMail
+
+After presenting drafts, **wait for explicit human confirmation** before sending each message.
+
+- Mode A (single draft): wait for "send", "yes", "ok", "確認", or "寄出"
+- Mode B (batch): human can say "approve all" or name specific contacts. Do NOT bulk-send without explicit approval.
+
+Do NOT send if human says "edit", "skip", "hold", or does not respond.
+
+**Once confirmed, send via OpenMail API:**
+
+```bash
+OPENMAIL_API_KEY=$(cat ~/.hermes/profiles/leo/secrets/openmail_api_key)
+OPENMAIL_INBOX_ID="0527f34e-65ad-4a02-adbc-e7872a9a921e"
+IDEMPOTENCY_KEY=$(python3 -c "import uuid; print(uuid.uuid4())")
+
+curl -s -X POST "https://api.openmail.sh/v1/inboxes/${OPENMAIL_INBOX_ID}/send" \
+  -H "Authorization: Bearer ${OPENMAIL_API_KEY}" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: ${IDEMPOTENCY_KEY}" \
+  -d '{
+    "to": "{recipient_email}",
+    "subject": "{subject}",
+    "body": "{html_body}"
+  }'
+```
+
+On success (`"status": "sent"`), capture `messageId` and `threadId`.
+
+**Report back:**
+```
+✅ Sent to {Name} <{email}>
+messageId: {id}
+threadId: {id}
+
+Logging to CRM...
+```
+
+For batch: confirm each send one by one, report status per contact.
+
+If API returns error: report the error, do NOT log to CRM, ask human how to proceed.
+
+---
+
 ### Step 5: Log Engagement After Sending
 
 After sending, create an Engagement record:
