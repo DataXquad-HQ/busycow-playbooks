@@ -1,18 +1,18 @@
-# BusyCow Playbooks
+# BusyCow Agent Team
 
 Production-grade AI agent skills, schemas, and setup guides — built for the
 [Hermes Agent](https://hermes-agent.nousresearch.com) stack.
 
-This repo is the **canonical reference for duplicating a BusyCow-powered
-agent team** on any fresh VM. Every directory has its own `README.md` that
-explains what lives there and in what order to install things.
+This repo is the **canonical reference for duplicating the BusyCow Agent Team**
+on any fresh VM. Every directory has its own `README.md` that explains what
+lives there and in what order to install things.
 
 ---
 
 ## Repository Structure
 
 ```
-busycow-playbooks/
+busycow-agent-team/
 ├── structural-data/      ← Shared schemas (CRM objects, DB definitions) — read by all agents
 ├── contextual-knowledge/ ← Shared background knowledge docs
 ├── core/                 ← Hermes install, identity templates, core skills
@@ -53,6 +53,18 @@ Phase 2  (shared layer)
 Phase 3  (per agent)
   └── agent-teams/<agent>/SETUP.md
 ```
+
+---
+
+## Agent Roster
+
+| Agent | Role |
+|-------|------|
+| Iris | Chief of Staff — coordination, dispatch, knowledge distillation |
+| Leo | Revenue — sales pipeline, partnerships, lead enrichment |
+| Maya | Content & Growth — blog, social, GTM |
+| Rex | Customer Success — support, renewals, response |
+| Steve | Development Lead — software, infrastructure |
 
 ---
 

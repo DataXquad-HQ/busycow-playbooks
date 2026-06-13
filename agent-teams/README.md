@@ -14,7 +14,6 @@ to install and run one agent on a Hermes profile.
 | Iris | `iris/` | Chief of Staff — coordination, dispatch, knowledge distillation |
 | Leo | `leo/` | Revenue — sales pipeline, partnerships, lead enrichment |
 | Maya | `maya/` | Content & Growth — blog, social, GTM |
-| Quinn | `quinn/` | Product Intelligence — research, feedback loops |
 | Rex | `rex/` | Customer Success — support, renewals, response |
 | Steve | `steve/` | Development Lead — software, infrastructure |
 
